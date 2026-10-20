@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Randevu Al — Beyaz Kuaför</title>
   <meta name="description" content="Beyaz Kuaför online randevu sistemi. Saç kesimi ve sakal tıraşı için uygun gün ve saat seçin." />
+  <meta name="site-id" content="beyaz" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -143,9 +144,8 @@
       <div class="rv-listhead">
         <h2>Randevularım</h2>
         <div class="rv-listactions">
-          <input type="tel" id="lookupPhone" placeholder="Telefon ile ara" />
-          <button class="btn btn--sm btn--outline" id="lookupBtn">Ara</button>
-          <button class="btn btn--sm btn--ghost" id="showAllBtn">Tümünü Göster</button>
+          <input type="tel" id="lookupPhone" placeholder="Telefon numaranız" />
+          <button class="btn btn--sm btn--outline" id="lookupBtn">Randevularımı Göster</button>
         </div>
       </div>
       <div id="apptList" class="rv-list"></div>
@@ -161,10 +161,12 @@
           <p>Bayrampaşa, İstanbul</p>
         </div>
       </div>
-      <p class="footer__copy">© 2026 Beyaz Kuaför. Randevularınız tarayıcınızda saklanır.</p>
+      <p class="footer__copy">© 2026 Beyaz Kuaför. Randevunuz bizim tarafımızda güvenle saklanır.</p>
     </div>
   </footer>
 
+  <script src="store.js"></script>
+  <script src="site-loader.js"></script>
   <script src="randevu.js"></script>
 </body>
 </html>

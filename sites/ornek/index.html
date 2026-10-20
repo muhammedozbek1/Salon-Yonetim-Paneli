@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Örnek Kuaför</title>
+  <meta name="description" content="Örnek Kuaför — Kadıköy'de saç kesimi ve sakal tıraşı." />
+  <!-- Bu satır siteyi belirler: her klasör kendi id'si ile ayrı hesap ve veriye sahiptir. -->
+  <meta name="site-id" content="ornek" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="container topbar__inner">
+      <span data-site="address">📍 Moda Cad. No:12, Kadıköy, İstanbul</span>
+      <div class="topbar__links">
+        <a href="tel:+905550000000" data-site="phoneLink">📞 0555 000 00 00</a>
+        <a href="../../index.html">← Siteye Dön</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#hero" class="logo">
+        <span class="logo__mark" data-site="initial">Ö</span>
+        <span class="logo__text" data-site="name">Örnek <em>Kuaför</em></span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="#hizmetler">Hizmetler</a>
+        <a href="#iletisim">İletişim</a>
+        <a href="../../randevu.html" class="nav--highlight">Randevu Al</a>
+        <a href="../../login.html" class="nav--admin">Yönetim Paneli</a>
+      </nav>
+      <a href="../../login.html" class="btn btn--ghost btn--sm header__cta" id="adminBtn">Yönetim Paneli</a>
+      <a href="../../randevu.html" class="btn btn--gold btn--sm header__cta">Randevu Al</a>
+      <button class="burger" id="burger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__overlay"></div>
+    <div class="container hero__content">
+      <div class="hero__badge" data-site="heroBadge">★ 4.9 · 120 Google Yorumu</div>
+      <h1 data-site="name">Örnek Kuaför</h1>
+      <p class="hero__tagline" data-site="tagline">Özgün Tasarım, Usta Elinden</p>
+      <p class="hero__sub" data-site="heroSub">Kadıköy'de saç kesimi, sakal tıraşı ve bakım hizmetleri.</p>
+      <div class="hero__actions">
+        <a href="../../randevu.html" class="btn btn--gold">📅 Randevu Al</a>
+        <a href="tel:+905550000000" class="btn btn--outline">📞 Hemen Ara</a>
+        <a href="https://wa.me/905550000000" class="btn btn--ghost" target="_blank" rel="noopener">💬 WhatsApp</a>
+      </div>
+      <div class="hero__meta">
+        <div><strong>Çalışma</strong><span data-site="hours">Her gün 09:00 – 22:00</span></div>
+        <div><strong>Konum</strong><span data-site="address">Moda Cad. No:12, Kadıköy</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="iletisim">
+    <div class="container">
+      <div class="section__head">
+        <span class="eyebrow">İletişim</span>
+        <h2>Bize Ulaşın</h2>
+      </div>
+      <div class="contact__actions">
+        <a href="tel:+905550000000" class="btn btn--gold">📞 Ara</a>
+        <a href="https://wa.me/905550000000" class="btn btn--outline" target="_blank" rel="noopener">💬 WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <span class="logo__mark" data-site="initial">Ö</span>
+        <div>
+          <strong data-site="name">Örnek Kuaför</strong>
+          <p data-site="addressShort">Moda Cad. No:12, Kadıköy</p>
+        </div>
+      </div>
+      <p class="footer__copy">© 2026 Örnek Kuaför. Tüm hakları saklıdır.</p>
+      <a href="../../login.html" class="footer__admin" id="adminLink">Yönetici Girişi</a>
+    </div>
+  </footer>
+
+  <script src="../../store.js"></script>
+  <script src="../../site-loader.js"></script>
+  <script src="../../script.js"></script>
+</body>
+</html>

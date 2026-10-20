@@ -1,7 +1,7 @@
 /* ==========================================================================
    Beyaz Kuaför — Yönetim Paneli
    ========================================================================== */
-(() => {
+(async () => {
   'use strict';
 
   const JOBS_KEY = 'beyaz_admin_jobs';
@@ -20,10 +20,13 @@
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   /* ------------------------------------------------------------------
-     Depolama
+     Depolama — ortak sunucu (BerberStore) + yerel önbellek
+     Veriler artık tarayıcıya özel değil; sunucuda saklanır ve tüm
+     cihazlarda aynı görünür.
   ------------------------------------------------------------------ */
-  const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-  const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const S = window.BerberStore;
+  const safeGet = (k) => S.getRaw(k);
+  const safeSet = (k, v) => S.setRaw(k, v);
 
   const getJobs = () => { try { return JSON.parse(safeGet(JOBS_KEY) || '[]'); } catch { return []; } };
   const saveJobs = (j) => safeSet(JOBS_KEY, JSON.stringify(j));
@@ -100,6 +103,7 @@
   ================================================================== */
   const VIEW_META = {
     pos: { title: 'Yeni İşlem', sub: 'Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.' },
+    appointments: { title: 'Randevular', sub: 'Müşterilerin site üzerinden aldığı online randevular.' },
     history: { title: 'İş Geçmişi', sub: 'Kayıtlı tüm işlemleri filtreleyin, inceleyin ve raporlayın.' },
     finance: { title: 'Mali İşlemler', sub: 'Günlük ve aylık ciro takibi, kırılımlar ve dönemsel raporlar.' },
     masters: { title: 'Usta Hesapları', sub: 'Dönemsel hak ediş, usta ödemeleri ve kalan bakiye.' },
@@ -110,7 +114,23 @@
 
   let currentView = 'pos';
 
+  /* PIN korumalı ekranlar — finansal veri gösteren bölümler */
+  const PIN_GUARDED_VIEWS = ['finance', 'kasa'];
+
   function switchView(name, skipHash) {
+    const guarded = PIN_GUARDED_VIEWS.includes(name);
+
+    if (guarded) {
+      /* Finansal alana giriş: PIN kilidi her seferinde yeniden istenir */
+      if (window.BerberPin && !window.BerberPin.isUnlocked()) {
+        window.BerberPin.open(() => switchView(name), name === 'kasa' ? 'Kasa Kilidi' : 'Mali İşlemler Kilidi');
+        return;
+      }
+    } else if (window.BerberPin) {
+      /* Finansal alandan çıkıldı — kilit yeniden kurulur */
+      window.BerberPin.lock();
+    }
+
     currentView = name;
     $$('.adm-view').forEach((v) => v.classList.toggle('is-active', v.dataset.view === name));
     $$('.adm-navitem').forEach((b) => b.classList.toggle('is-active', b.dataset.view === name));
@@ -121,6 +141,8 @@
     if (name === 'history') renderJobs();
     if (name === 'finance') renderFinance();
     if (name === 'settings') renderSettings();
+    if (name === 'appointments' && window.BerberAppointments) window.BerberAppointments.render();
+    if (name === 'kasa' && window.BerberPay) window.BerberPay.renderCash();
     if (name === 'pos') { renderDoneList(); renderDayStatus(); }
     if (!skipHash) {
       try { history.replaceState(null, '', '#' + name); } catch {}
@@ -446,6 +468,16 @@
   $$('.adm-modal').forEach((m) => {
     m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('is-open'); });
   });
+
+  /* Gün Sonu raporu kapanınca finansal kilit yeniden kurulur */
+  const dayEndModal = $('#dayEndModal');
+  if (dayEndModal) {
+    dayEndModal.addEventListener('click', () => {
+      setTimeout(() => {
+        if (!dayEndModal.classList.contains('is-open') && window.BerberPin) window.BerberPin.lock();
+      }, 0);
+    });
+  }
 
   /* ==================================================================
      Ekstra hizmet seçimi
@@ -827,9 +859,13 @@
   }
 
   $('#dayEndBtn').addEventListener('click', () => {
-    $('#dayEndDate').value = todayISO();
-    renderDayEnd();
-    openModal('dayEndModal');
+    const openDayEnd = () => {
+      $('#dayEndDate').value = todayISO();
+      renderDayEnd();
+      openModal('dayEndModal');
+    };
+    if (window.BerberPin) window.BerberPin.require(openDayEnd, 'Gün Sonu Kilidi');
+    else openDayEnd();
   });
   $('#dayEndRefresh').addEventListener('click', renderDayEnd);
   $('#dayEndDate').addEventListener('change', renderDayEnd);
@@ -1012,9 +1048,13 @@
   }
 
   $('#finDayEnd').addEventListener('click', () => {
-    $('#dayEndDate').value = todayISO();
-    renderDayEnd();
-    openModal('dayEndModal');
+    const openDayEnd = () => {
+      $('#dayEndDate').value = todayISO();
+      renderDayEnd();
+      openModal('dayEndModal');
+    };
+    if (window.BerberPin) window.BerberPin.require(openDayEnd, 'Gün Sonu Kilidi');
+    else openDayEnd();
   });
 
   $('#finMonthCsv').addEventListener('click', () => {
@@ -1564,6 +1604,20 @@
   /* ==================================================================
      Başlat
   ================================================================== */
+  /* Oturum kontrolü — giriş yapılmamışsa login.html'e yönlendirilir.
+     Sunucuya ulaşılamıyorsa panel çevrimdışı (yalnızca bu tarayıcı) çalışır. */
+  const session = await S.requireAuth();
+  if (!session) return;
+
+  const siteInfo = S.site;
+  if (siteInfo && siteInfo.name) {
+    const brandName = document.querySelector('.adm-side__brandtext strong');
+    if (brandName) brandName.textContent = siteInfo.name;
+    const verEl = document.querySelector('.adm-side__ver');
+    if (verEl) verEl.textContent = `${siteInfo.name} · Yönetim Paneli v2.0`;
+  }
+  document.title = `${siteInfo ? siteInfo.name : 'Beyaz Kuaför'} — Yönetim Paneli`;
+
   renderStats();
   renderServices();
   renderMasters();
@@ -1576,4 +1630,19 @@
 
   const initialView = location.hash.replace('#', '');
   if (VIEW_META[initialView]) switchView(initialView, true);
+
+  /* --- Başka cihazda yapılan değişiklikler --- */
+  S.onChange((keys) => {
+    if (!keys || !keys.length) return;
+    renderStats();
+    if (currentView === 'pos') { renderDoneList(); renderDayStatus(); renderSummary(); }
+    if (currentView === 'history') renderJobs();
+    if (currentView === 'finance') renderFinance();
+    if (currentView === 'settings') renderSettings();
+    if (window.BerberPay) {
+      window.BerberPay.renderPaySettings();
+      window.BerberPay.renderMasterAccounts();
+      window.BerberPay.renderCash();
+    }
+  });
 })();

@@ -33,8 +33,9 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-  const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const S = window.BerberStore;
+  const safeGet = (k) => { try { return S.getRaw(k); } catch { return null; } };
+  const safeSet = (k, v) => { try { S.setRaw(k, v); } catch {} };
 
   const readJSON = (key, fallback) => {
     try {
@@ -804,7 +805,11 @@
   /* ------------------------------------------------------------------
      Uygulama — event bağlantıları
   ------------------------------------------------------------------ */
-  function init() {
+  async function init() {
+    /* Oturum + sunucu verisi hazır olmadan tablolara dokunma */
+    const ok = await S.requireAuth();
+    if (!ok) return;
+
     migrate();
 
     /* --- Ödeme yöntemi (mevcut işlem akışına ek alan) --- */
@@ -919,6 +924,8 @@
         const view = btn.dataset.view;
         if (view === 'pay') renderPaySettings();
         if (view === 'masters') renderMasterAccounts();
+        /* Kasa ekranı PIN arkasında — kilitliyken veriyi çizme */
+        if (view === 'kasa' && window.BerberPin && !window.BerberPin.isUnlocked()) return;
         if (view === 'kasa') renderCash();
       });
     });
@@ -926,7 +933,8 @@
     /* --- İlk render (gizliyken de hesaplanabilsin) --- */
     renderPaySettings();
     renderMasterAccounts();
-    renderCash();
+    /* Kasa verisi yalnızca PIN açıldıktan sonra çizilir */
+    if (!window.BerberPin || window.BerberPin.isUnlocked()) renderCash();
 
     const today = api.todayISO();
     const payDate = $('#paymentDate');

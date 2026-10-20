@@ -1,0 +1,18 @@
+{
+  "id": "ornek",
+  "name": "Örnek Kuaför",
+  "meta": {
+    "tagline": "Özgün Tasarım, Usta Elinden",
+    "phone": "+905550000000",
+    "phoneDisplay": "0555 000 00 00",
+    "address": "Moda Cad. No:12, Kadıköy, İstanbul",
+    "whatsapp": "905550000000",
+    "heroBadge": "★ 4.9 · 120 Google Yorumu",
+    "heroSub": "Kadıköy'de saç kesimi, sakal tıraşı ve bakım hizmetleri.",
+    "hours": "Her gün 09:00 – 22:00",
+    "theme": {
+      "accent": "#c2703e",
+      "accentDark": "#e09a63"
+    }
+  }
+}

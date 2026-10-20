@@ -1,0 +1,18 @@
+{
+  "id": "beyaz",
+  "name": "Beyaz Kuaför",
+  "meta": {
+    "tagline": "Zamansız Stil, Güçlü İfade",
+    "phone": "+905327613977",
+    "phoneDisplay": "0532 761 39 77",
+    "address": "Orta Mah., Sakarya Sk. 2 C, Bayrampaşa, İstanbul",
+    "whatsapp": "905327613977",
+    "heroBadge": "★ 5.0 · 55 Google Yorumu",
+    "heroSub": "Bayrampaşa'nın güvenilir erkek kuaförü. Profesyonel saç kesimi ve sakal tıraşı ile tarzınızı yenileyin.",
+    "hours": "Pzt–Cmt 08:00 – 21:00",
+    "theme": {
+      "accent": "#d4af37",
+      "accentDark": "#f0d06a"
+    }
+  }
+}

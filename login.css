@@ -1,0 +1,156 @@
+/* ==========================================================================
+   Beyaz Kuaför — Giriş Sayfası
+   ========================================================================== */
+
+.lg-body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(212, 175, 55, 0.14), transparent 65%),
+    radial-gradient(700px 420px at 100% 100%, rgba(212, 175, 55, 0.07), transparent 60%),
+    var(--bg);
+}
+
+.lg-wrap { width: 100%; max-width: 420px; }
+
+.lg-card {
+  background: linear-gradient(180deg, var(--card), #131318);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 34px 30px 28px;
+  box-shadow: var(--shadow);
+  animation: lgIn .35s ease both;
+}
+
+@keyframes lgIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.lg-brand {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 20px; margin-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.lg-brand__mark {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  color: #0b0b0d; display: grid; place-items: center;
+  font-weight: 700; font-size: 21px; font-family: 'Playfair Display', serif;
+  flex: none;
+}
+
+.lg-brand__text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.lg-brand__text strong { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 600; }
+.lg-brand__text em { font-style: normal; font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+
+.lg-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; font-weight: 600; margin-bottom: 6px;
+}
+
+.lg-sub { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+
+.lg-form { display: flex; flex-direction: column; gap: 16px; }
+
+.lg-field { display: flex; flex-direction: column; gap: 7px; }
+.lg-field label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+.lg-field input,
+.lg-field select {
+  width: 100%;
+  padding: 13px 15px;
+  background: #0f0f13;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+
+.lg-field input::placeholder { color: #5d5a54; }
+
+.lg-field input:focus,
+.lg-field select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.16);
+}
+
+.lg-field select { appearance: none; cursor: pointer; }
+
+.lg-selectwrap { position: relative; }
+.lg-selectwrap::after {
+  content: '';
+  position: absolute; right: 16px; top: 50%;
+  width: 8px; height: 8px; margin-top: -6px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.lg-passwrap { position: relative; }
+.lg-passwrap input { padding-right: 46px; }
+
+.lg-eye {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: 9px;
+  color: var(--muted); cursor: pointer;
+  transition: color .18s, background .18s;
+}
+.lg-eye:hover { color: var(--gold); background: rgba(255, 255, 255, 0.05); }
+
+.lg-error {
+  min-height: 18px;
+  font-size: 13px; color: #ff8080;
+}
+
+.lg-submit {
+  position: relative;
+  width: 100%;
+  padding: 14px 18px;
+  border: 0; border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  color: #0b0b0d;
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: transform .12s, filter .18s, opacity .18s;
+}
+.lg-submit:hover { filter: brightness(1.07); }
+.lg-submit:active { transform: translateY(1px); }
+.lg-submit:disabled { opacity: .65; cursor: progress; }
+
+.lg-spinner {
+  display: none;
+  position: absolute; right: 16px; top: 50%;
+  width: 16px; height: 16px; margin-top: -8px;
+  border: 2px solid rgba(11, 11, 13, .3);
+  border-top-color: #0b0b0d;
+  border-radius: 50%;
+  animation: lgSpin .7s linear infinite;
+}
+@keyframes lgSpin { to { transform: rotate(360deg); } }
+.lg-submit.is-loading .lg-spinner { display: block; }
+.lg-submit.is-loading .lg-submit__text { opacity: .75; }
+
+.lg-foot { text-align: center; margin-top: 4px; }
+.lg-foot a { color: var(--muted); font-size: 13px; transition: color .18s; }
+.lg-foot a:hover { color: var(--gold); }
+
+.lg-note {
+  margin-top: 18px; text-align: center;
+  color: #6f6b64; font-size: 12.5px; line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .lg-card { padding: 26px 20px 22px; border-radius: 16px; }
+  .lg-title { font-size: 22px; }
+}

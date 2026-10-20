@@ -65,6 +65,11 @@
         <svg class="adm-navitem__icon"><use href="#i-receipt"/></svg>
         <span>Yeni İşlem</span>
       </button>
+      <button type="button" class="adm-navitem" data-view="appointments">
+        <svg class="adm-navitem__icon"><use href="#i-cal"/></svg>
+        <span>Randevular</span>
+        <span class="adm-navitem__badge" id="navApptCount">0</span>
+      </button>
       <button type="button" class="adm-navitem" data-view="history">
         <svg class="adm-navitem__icon"><use href="#i-history"/></svg>
         <span>İş Geçmişi</span>
@@ -103,6 +108,9 @@
       <a class="adm-side__link" href="randevu.html">
         <svg class="adm-navitem__icon"><use href="#i-cal"/></svg> Randevu Sayfası
       </a>
+      <button type="button" class="adm-side__link adm-side__link--btn" id="sideLogout">
+        <svg class="adm-navitem__icon"><use href="#i-external"/></svg> Çıkış Yap
+      </button>
       <p class="adm-side__ver">Beyaz Kuaför · Yönetim Paneli v2.0</p>
     </div>
   </aside>
@@ -115,6 +123,10 @@
         <p id="admPageSub">Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.</p>
       </div>
       <div class="adm-pagebar__actions">
+        <div class="adm-user">
+          <span class="adm-user__avatar" id="admUserInitial">–</span>
+          <span class="adm-user__name" id="admUserName">—</span>
+        </div>
         <div class="adm-clock">
           <svg class="adm-navitem__icon"><use href="#i-clock"/></svg>
           <span id="admClock">--:--</span>
@@ -258,6 +270,26 @@
             </section>
           </div>
 
+        </div>
+      </section>
+
+      <!-- ---------- RANDEVUlar ---------- -->
+      <section class="adm-view" data-view="appointments">
+        <div class="adm-card">
+          <header class="adm-card__head">
+            <div>
+              <h2>Online Randevular</h2>
+              <span class="adm-card__sub">Müşterilerin site üzerinden aldığı randevular</span>
+            </div>
+            <div class="adm-filters adm-filters--bar" style="border:0;padding:0;">
+              <label class="adm-input adm-input--icon">
+                <svg><use href="#i-cal"/></svg>
+                <input type="date" id="apptDate" aria-label="Randevu tarihi" />
+              </label>
+              <button type="button" class="adm-btn adm-btn--outline adm-btn--sm" id="apptAllBtn">Tümü</button>
+            </div>
+          </header>
+          <div class="adm-card__body adm-card__body--flush adm-apptlist" id="apptAdminList"></div>
         </div>
       </section>
 
@@ -868,16 +900,102 @@
           </section>
         </div>
 
+        <div class="adm-grid adm-grid--2">
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Site Bilgileri</h2>
+                <span class="adm-card__sub">Index sayfasında görünen bilgiler</span>
+              </div>
+              <span class="adm-card__count" id="siteIdLabel">—</span>
+            </header>
+            <div class="adm-card__body">
+              <div class="adm-field">
+                <label for="siteName">Site Adı</label>
+                <input type="text" id="siteName" placeholder="Beyaz Kuaför" />
+              </div>
+              <div class="adm-field">
+                <label for="siteTagline">Slogan</label>
+                <input type="text" id="siteTagline" placeholder="Zamansız Stil, Güçlü İfade" />
+              </div>
+              <div class="adm-field">
+                <label for="sitePhone">Telefon</label>
+                <input type="text" id="sitePhone" placeholder="0532 761 39 77" />
+              </div>
+              <div class="adm-field">
+                <label for="siteAddress">Adres</label>
+                <input type="text" id="siteAddress" placeholder="Bayrampaşa, İstanbul" />
+              </div>
+              <button type="button" class="adm-btn adm-btn--primary" id="siteSave">Kaydet</button>
+            </div>
+          </section>
+
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>PIN Kodu</h2>
+                <span class="adm-card__sub">Mali İşlemler ekranının kilidi</span>
+              </div>
+              <span class="adm-card__count" id="pinState">—</span>
+            </header>
+            <div class="adm-card__body">
+              <p class="adm-hint adm-hint--muted" id="pinHint">Mali İşlemler sekmesine girmek için gereken 4-6 rakamlık kod.</p>
+              <div class="adm-field">
+                <label for="newPin">Yeni PIN</label>
+                <input type="text" id="newPin" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off" />
+              </div>
+              <div class="adm-field">
+                <label for="newPin2">Yeni PIN (tekrar)</label>
+                <input type="text" id="newPin2" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off" />
+              </div>
+              <button type="button" class="adm-btn adm-btn--primary" id="savePinBtn">PIN Kodunu Kaydet</button>
+            </div>
+          </section>
+
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Kullanıcılar</h2>
+                <span class="adm-card__sub">Panele girebilecek hesaplar</span>
+              </div>
+              <span class="adm-card__count" id="userCount">0</span>
+            </header>
+            <div class="adm-card__body">
+              <div id="userList" class="adm-svclist"></div>
+              <div class="adm-addrow">
+                <input type="text" id="newUserName" placeholder="Kullanıcı adı" />
+                <input type="password" id="newUserPass" placeholder="Şifre" />
+                <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="addUserBtn">
+                  <svg><use href="#i-plus"/></svg> Ekle
+                </button>
+              </div>
+              <div class="adm-field" style="margin-top:18px;">
+                <label for="curPass">Mevcut Şifre</label>
+                <input type="password" id="curPass" placeholder="••••••" />
+              </div>
+              <div class="adm-field">
+                <label for="newPass">Yeni Şifre</label>
+                <input type="password" id="newPass" placeholder="••••••" />
+              </div>
+              <button type="button" class="adm-btn adm-btn--outline" id="changePassBtn">Şifremi Değiştir</button>
+            </div>
+          </section>
+        </div>
+
         <section class="adm-card adm-dangerzone">
           <header class="adm-card__head">
             <div>
               <h2>Veriler</h2>
-              <span class="adm-card__sub">Tüm kayıtlar tarayıcıda saklanır</span>
+              <span class="adm-card__sub">Tüm kayıtlar sunucuda saklanır</span>
             </div>
           </header>
           <div class="adm-card__body adm-card__body--row">
             <p>Tüm işlem geçmişini kalıcı olarak silmek istiyor musunuz? Bu işlem geri alınamaz.</p>
             <button type="button" class="adm-btn adm-btn--danger" id="clearJobsBtn">Tüm Geçmişi Sil</button>
+          </div>
+          <div class="adm-card__body adm-card__body--row" style="border-top:1px dashed var(--border-2);">
+            <p>Bu tarayıcıda eski sürümden kalan kayıtları sunucuya taşımak için kullanılır.</p>
+            <button type="button" class="adm-btn adm-btn--outline" id="importLegacyBtn">Eski Verileri İçe Aktar</button>
           </div>
         </section>
       </section>
@@ -990,9 +1108,49 @@
   </div>
 </div>
 
+<!-- PIN kartı — Mali İşlemler kilidi -->
+<div class="adm-modal adm-modal--pin" id="pinModal" role="dialog" aria-modal="true">
+  <div class="adm-pinbox">
+    <div class="adm-pinbox__head">
+      <span class="adm-pinbox__icon"><svg><use href="#i-safe"/></svg></span>
+      <div>
+        <h3 id="pinModalTitle">Finans Kilidi</h3>
+        <span>Ciro, kasa ve finans raporlarını görmek için PIN kodunu girin</span>
+      </div>
+    </div>
+
+    <div class="adm-pinbox__dots" id="pinDots" aria-hidden="true"></div>
+    <p class="adm-pinbox__err" id="pinError" role="alert"></p>
+
+    <div class="adm-pinbox__pad" id="pinPad">
+      <button type="button" data-pin="1">1</button>
+      <button type="button" data-pin="2">2</button>
+      <button type="button" data-pin="3">3</button>
+      <button type="button" data-pin="4">4</button>
+      <button type="button" data-pin="5">5</button>
+      <button type="button" data-pin="6">6</button>
+      <button type="button" data-pin="7">7</button>
+      <button type="button" data-pin="8">8</button>
+      <button type="button" data-pin="9">9</button>
+      <button type="button" data-pin="clear" class="adm-pinbox__pad--alt">Temizle</button>
+      <button type="button" data-pin="0">0</button>
+      <button type="button" data-pin="back" class="adm-pinbox__pad--alt" aria-label="Sil">
+        <svg><use href="#i-arrow"/></svg>
+      </button>
+    </div>
+
+    <button type="button" class="adm-btn adm-btn--primary adm-btn--full" id="pinSubmit" disabled>Kilidi Aç</button>
+    <button type="button" class="adm-btn adm-btn--ghost adm-btn--full" data-close="pinModal">Vazgeç</button>
+  </div>
+</div>
+
 <div class="adm-toasts" id="admToasts" aria-live="polite"></div>
 
+<script src="store.js"></script>
 <script src="admin.js"></script>
 <script src="admin-pay.js"></script>
+<script src="admin-account.js"></script>
+<script src="admin-appointments.js"></script>
+<script src="admin-pin.js"></script>
 </body>
 </html>

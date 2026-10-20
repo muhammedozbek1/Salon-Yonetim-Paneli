@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'beyaz_kuafor_randevular';
+const store = window.BerberStore;   // ortak veri katmanı (sunucu + yerel önbellek)
 
 // ---------- State ----------
 let selectedService = null;
@@ -8,10 +9,14 @@ let currentStep = 1;
 
 // ---------- Helpers ----------
 function loadAppts() {
+  if (store) return store.getJSON(STORAGE_KEY, []);
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch { return []; }
 }
-function saveAppts(list) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+function saveAppts(list) {
+  if (store) { store.setJSON(STORAGE_KEY, list); return; }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
 
 function fmtDate(iso) {
   const d = new Date(iso + 'T00:00:00');
@@ -49,7 +54,8 @@ function generateSlots() {
   return slots.filter(s => s <= '20:30');
 }
 
-function takenSlots(date) {
+async function takenSlots(date) {
+  if (store) return store.appts.takenTimes(date);
   return loadAppts()
     .filter(a => a.date === date && a.status !== 'cancelled')
     .map(a => a.time);
@@ -92,7 +98,7 @@ dateInput.min = today;
 // default tomorrow-ish: today
 dateInput.value = today;
 
-function renderSlots() {
+async function renderSlots() {
   const container = document.getElementById('slots');
   container.innerHTML = '';
   const dateErr = document.getElementById('dateError');
@@ -104,7 +110,7 @@ function renderSlots() {
   if (isPastDate(selectedDate)) { dateErr.textContent = 'Geçmiş bir tarih seçemezsiniz.'; return; }
   if (isSunday(selectedDate)) { dateErr.textContent = 'Pazar günleri kapalıyız. Lütfen başka bir gün seçin.'; return; }
 
-  const taken = takenSlots(selectedDate);
+  const taken = await takenSlots(selectedDate);
   const slots = generateSlots();
   let any = false;
   slots.forEach(slot => {
@@ -151,7 +157,7 @@ document.getElementById('toStep3').addEventListener('click', () => {
 
 // Step 3
 document.getElementById('back2').addEventListener('click', () => showStep(2));
-document.getElementById('infoForm').addEventListener('submit', (e) => {
+document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phone').value.trim();
@@ -161,23 +167,43 @@ document.getElementById('infoForm').addEventListener('submit', (e) => {
   if (!name) { err.textContent = 'Ad soyad zorunludur.'; return; }
   if (!phone || phone.replace(/\D/g,'').length < 10) { err.textContent = 'Geçerli bir telefon numarası girin.'; return; }
 
-  const appt = {
-    id: 'A' + Date.now(),
-    service: selectedService,
-    date: selectedDate,
-    time: selectedSlot,
-    name, phone, note,
-    status: 'confirmed',
-    createdAt: new Date().toISOString()
-  };
-  const list = loadAppts();
-  // double-check slot not taken
-  if (list.some(a => a.date === selectedDate && a.time === selectedSlot && a.status !== 'cancelled')) {
-    err.textContent = 'Bu saat az önce doldu. Lütfen başka bir saat seçin.';
-    showStep(2); renderSlots(); return;
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+
+  let appt;
+  if (store) {
+    try {
+      // Sunucu, saati aynı anda iki kişi alırsa engeller (409).
+      appt = await store.appts.create({
+        service: selectedService,
+        date: selectedDate,
+        time: selectedSlot,
+        name, phone, note
+      });
+    } catch (ex) {
+      err.textContent = ex.message || 'Randevu oluşturulamadı.';
+      if (submitBtn) submitBtn.disabled = false;
+      showStep(2); renderSlots(); return;
+    }
+  } else {
+    const list = loadAppts();
+    if (list.some(a => a.date === selectedDate && a.time === selectedSlot && a.status !== 'cancelled')) {
+      err.textContent = 'Bu saat az önce doldu. Lütfen başka bir saat seçin.';
+      showStep(2); renderSlots(); return;
+    }
+    appt = {
+      id: 'A' + Date.now(),
+      service: selectedService,
+      date: selectedDate,
+      time: selectedSlot,
+      name, phone, note,
+      status: 'confirmed',
+      createdAt: new Date().toISOString()
+    };
+    list.push(appt);
+    saveAppts(list);
   }
-  list.push(appt);
-  saveAppts(list);
+  if (submitBtn) submitBtn.disabled = false;
 
   // confirmation
   const summary = document.getElementById('summary');
@@ -191,7 +217,7 @@ document.getElementById('infoForm').addEventListener('submit', (e) => {
     ${appt.note ? `<div><span>Not</span><span>${appt.note}</span></div>` : ''}
   `;
   showStep(4);
-  renderList(currentFilter || 'all');
+  renderList(currentFilter || 'phone');
 });
 
 // Step 4
@@ -209,18 +235,27 @@ document.getElementById('newAppt').addEventListener('click', () => {
 });
 
 // ---------- Appointments list ----------
-let currentFilter = 'all';
+let currentFilter = 'phone';
 
-function renderList(mode) {
+async function renderList(mode) {
   const container = document.getElementById('apptList');
   container.innerHTML = '';
   let list = loadAppts();
+
   if (mode === 'phone') {
     const phone = document.getElementById('lookupPhone').value.trim();
-    if (phone) list = list.filter(a => a.phone.includes(phone.replace(/\s/g,'')));
+    if (store && phone) {
+      // Sunucudan yalnızca bu numaraya ait randevular çekilir.
+      list = await store.appts.byPhone(phone);
+    } else if (phone) {
+      list = list.filter(a => a.phone.includes(phone.replace(/\s/g,'')));
+    } else {
+      container.innerHTML = '<p class="rv-empty">Randevularınızı görmek için telefon numaranızı girin.</p>';
+      return;
+    }
   }
   // sort by date/time
-  list.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+  list = list.slice().sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
   if (!list.length) {
     container.innerHTML = '<p class="rv-empty">Kayıtlı randevu bulunamadı.</p>';
     return;
@@ -243,19 +278,32 @@ function renderList(mode) {
     container.appendChild(div);
   });
   container.querySelectorAll('[data-cancel]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.dataset.cancel;
       if (!confirm('Bu randevuyu iptal etmek istediğinize emin misiniz?')) return;
-      const list = loadAppts();
-      const idx = list.findIndex(a => a.id === id);
-      if (idx > -1) { list[idx].status = 'cancelled'; saveAppts(list); renderList(currentFilter); renderSlots(); }
+      if (store) {
+        const phone = document.getElementById('lookupPhone').value.trim();
+        try {
+          await store.appts.cancel(id, phone);
+        } catch (ex) {
+          alert(ex.message || 'Randevu iptal edilemedi.');
+          return;
+        }
+      } else {
+        const list2 = loadAppts();
+        const idx = list2.findIndex(a => a.id === id);
+        if (idx > -1) { list2[idx].status = 'cancelled'; saveAppts(list2); }
+      }
+      renderList(currentFilter); renderSlots();
     });
   });
 }
 
 document.getElementById('lookupBtn').addEventListener('click', () => { currentFilter = 'phone'; renderList('phone'); });
-document.getElementById('showAllBtn').addEventListener('click', () => { currentFilter = 'all'; document.getElementById('lookupPhone').value = ''; renderList('all'); });
+document.getElementById('lookupPhone').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); currentFilter = 'phone'; renderList('phone'); }
+});
 
 // initial list
-renderList('all');
+renderList('phone');
 // refresh slots if date changed by cancellation

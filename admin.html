@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yönetim Paneli — Beyaz Kuaför</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <!-- Login -->
+  <div class="adm-login" id="loginScreen">
+    <div class="adm-login__box">
+      <div class="logo" style="justify-content:center;margin-bottom:20px;">
+        <span class="logo__mark">B</span>
+        <span class="logo__text">Beyaz <em>Kuaför</em></span>
+      </div>
+      <h1>Yönetici Girişi</h1>
+      <p class="rv-hint">Devam etmek için şifrenizi girin.</p>
+      <form id="loginForm" class="rv-form">
+        <div class="rv-field">
+          <label for="pw">Şifre</label>
+          <input type="password" id="pw" required autofocus placeholder="••••••••" />
+        </div>
+        <p class="rv-error" id="loginErr"></p>
+        <button type="submit" class="btn btn--gold" style="width:100%;justify-content:center;">Giriş Yap</button>
+      </form>
+      <p class="adm-login__note">Varsayılan şifre: <code>beyaz2026</code> (giriş sonrası değiştirilebilir)</p>
+      <a href="index.html" class="link" style="display:block;text-align:center;margin-top:16px;">← Siteye Dön</a>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="adm-app hidden" id="app">
+    <header class="header">
+      <div class="container header__inner">
+        <a href="index.html" class="logo">
+          <span class="logo__mark">B</span>
+          <span class="logo__text">Beyaz <em>Kuaför</em></span>
+        </a>
+        <span class="adm-badge">Yönetim Paneli</span>
+        <button class="btn btn--sm btn--ghost" id="logoutBtn" style="margin-left:auto;">Çıkış</button>
+      </div>
+    </header>
+
+    <main class="container adm-main">
+      <!-- Summary cards -->
+      <div class="adm-stats" id="stats">
+        <div class="adm-stat"><span>Bugün</span><strong id="stToday">0</strong><small id="stTodayAmt">0 ₺</small></div>
+        <div class="adm-stat"><span>Bu Ay</span><strong id="stMonth">0</strong><small id="stMonthAmt">0 ₺</small></div>
+        <div class="adm-stat"><span>Toplam</span><strong id="stAll">0</strong><small id="stAllAmt">0 ₺</small></div>
+        <div class="adm-stat"><span>En Çok</span><strong id="stTop">—</strong><small>hizmet</small></div>
+      </div>
+
+      <!-- Add job -->
+      <section class="rv-card">
+        <h2>Yeni İş Ekle</h2>
+        <p class="rv-hint">Müşteriye yaptığınız hizmeti ve alınan ücreti girin.</p>
+        <form id="jobForm" class="rv-form">
+          <div class="adm-formgrid">
+            <div class="rv-field">
+              <label for="jDate">Tarih</label>
+              <input type="date" id="jDate" required />
+            </div>
+            <div class="rv-field">
+              <label for="jTime">Saat</label>
+              <input type="time" id="jTime" />
+            </div>
+            <div class="rv-field">
+              <label for="jCustomer">Müşteri (isteğe bağlı)</label>
+              <input type="text" id="jCustomer" placeholder="Ad Soyad" />
+            </div>
+            <div class="rv-field">
+              <label for="jService">Hizmet</label>
+              <select id="jService"></select>
+            </div>
+            <div class="rv-field">
+              <label for="jAmount">Ücret (₺)</label>
+              <input type="number" id="jAmount" min="0" step="1" required />
+            </div>
+            <div class="rv-field">
+              <label for="jNote">Not</label>
+              <input type="text" id="jNote" placeholder="Opsiyonel" />
+            </div>
+          </div>
+          <p class="rv-error" id="jobErr"></p>
+          <div class="rv-nav">
+            <button type="submit" class="btn btn--gold">Kaydet ✓</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Filters -->
+      <section class="rv-card">
+        <div class="rv-listhead">
+          <h2>İş Geçmişi</h2>
+          <div class="rv-listactions">
+            <input type="date" id="fFrom" />
+            <input type="date" id="fTo" />
+            <input type="text" id="fSearch" placeholder="Ara (müşteri/hizmet)" />
+            <button class="btn btn--sm btn--outline" id="applyFilter">Filtrele</button>
+            <button class="btn btn--sm btn--ghost" id="clearFilter">Temizle</button>
+            <button class="btn btn--sm btn--outline" id="exportBtn">CSV İndir</button>
+          </div>
+        </div>
+        <div class="adm-tablewrap">
+          <table class="adm-table" id="jobTable">
+            <thead>
+              <tr>
+                <th>Tarih</th><th>Saat</th><th>Müşteri</th><th>Hizmet</th><th>Ücret</th><th>Not</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="jobBody"></tbody>
+          </table>
+        </div>
+        <p class="rv-empty" id="jobEmpty" style="display:none;">Kayıt bulunamadı.</p>
+      </section>
+
+      <!-- Settings -->
+      <section class="rv-card">
+        <h2>Ayarlar</h2>
+        <p class="rv-hint">Hizmet fiyatlarını ve şifreyi yönetin.</p>
+        <div class="adm-settings">
+          <div>
+            <h3>Hizmetler & Fiyatlar</h3>
+            <div id="svcList" class="adm-svclist"></div>
+            <div class="adm-addsvc">
+              <input type="text" id="newSvcName" placeholder="Hizmet adı" />
+              <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
+              <button class="btn btn--sm btn--outline" id="addSvcBtn">Ekle</button>
+            </div>
+          </div>
+          <div>
+            <h3>Şifre Değiştir</h3>
+            <form id="pwForm" class="rv-form">
+              <div class="rv-field">
+                <label for="newPw">Yeni şifre</label>
+                <input type="password" id="newPw" required />
+              </div>
+              <div class="rv-field">
+                <label for="newPw2">Tekrar</label>
+                <input type="password" id="newPw2" required />
+              </div>
+              <p class="rv-error" id="pwErr"></p>
+              <button type="submit" class="btn btn--sm btn--gold">Güncelle</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

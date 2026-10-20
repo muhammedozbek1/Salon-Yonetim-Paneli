@@ -102,6 +102,9 @@
     pos: { title: 'Yeni İşlem', sub: 'Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.' },
     history: { title: 'İş Geçmişi', sub: 'Kayıtlı tüm işlemleri filtreleyin, inceleyin ve raporlayın.' },
     finance: { title: 'Mali İşlemler', sub: 'Günlük ve aylık ciro takibi, kırılımlar ve dönemsel raporlar.' },
+    masters: { title: 'Usta Hesapları', sub: 'Dönemsel hak ediş, usta ödemeleri ve kalan bakiye.' },
+    kasa: { title: 'Kasa', sub: 'Nakit ve kart cirosu, gün sonu kapanışı ve fark takibi.' },
+    pay: { title: 'Pay Ayarları', sub: 'Usta ve hizmet bazlı pay oranlarını yönetin.' },
     settings: { title: 'Ayarlar', sub: 'Hizmet fiyatlarını ve usta listesini yönetin.' }
   };
 
@@ -354,6 +357,7 @@
           <svg><use href="#i-trash"/></svg>
         </button>`;
       row.querySelector('.adm-done__del').addEventListener('click', () => {
+        if (window.BerberPay && !window.BerberPay.guardDelete(j)) return;
         if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
         saveJobs(getJobs().filter((x) => x.id !== j.id));
         renderDoneList();
@@ -385,6 +389,21 @@
     if (!state.selected.length) { toast('Hizmet seçin.', 'err'); return; }
     if (!state.master) { toast('Usta seçin.', 'err'); return; }
 
+    /* Kasa kapanışı yapılmış günlerde yeni işlem alınamaz (admin-pay modülü) */
+    const guard = (window.BerberPay && window.BerberPay.checkTransactionAllowed)
+      ? window.BerberPay.checkTransactionAllowed()
+      : { ok: true };
+    if (!guard.ok) { toast(guard.reason, 'err'); return; }
+
+    /* Pay oranı + ödeme yöntemi snapshot'ı (admin-pay modülü) */
+    const extra = (window.BerberPay && window.BerberPay.buildJobFields)
+      ? window.BerberPay.buildJobFields({
+        master: state.master,
+        services: [...state.selected],
+        amount: totalAmount()
+      })
+      : {};
+
     const job = {
       id: 'J' + Date.now() + Math.floor(Math.random() * 1000),
       date: todayISO(),
@@ -393,7 +412,8 @@
       services: [...state.selected],
       service: state.selected.join(' + '),
       amount: totalAmount(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      ...extra
     };
     const jobs = getJobs();
     jobs.push(job);
@@ -646,6 +666,7 @@
     tbody.querySelectorAll('.adm-del').forEach((btn, i) => {
       btn.addEventListener('click', () => {
         const job = filteredJobs[i];
+        if (window.BerberPay && !window.BerberPay.guardDelete(job)) return;
         if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
         saveJobs(getJobs().filter((x) => x.id !== job.id));
         renderJobs();
@@ -1529,6 +1550,16 @@
     if (e.key === 'F2') { e.preventDefault(); switchView('pos'); }
     if (e.key === 'F4' && e.shiftKey) { e.preventDefault(); switchView('history'); }
   });
+
+  /* ------------------------------------------------------------------
+     Köprü — admin-pay modülünün kullandığı mevcut yardımcılar.
+     Yeni modül mevcut fonksiyonları değiştirmez, yalnızca okur.
+  ------------------------------------------------------------------ */
+  window.BerberPanel = {
+    getJobs, saveJobs, getSvcs, getMasters,
+    money, toast, escapeHtml, todayISO, fmtDate, fmtDateLong,
+    svcPrice, servicesOf, switchView, initials
+  };
 
   /* ==================================================================
      Başlat

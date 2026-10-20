@@ -22,7 +22,7 @@ Ardından `http://localhost:8000` adresini açın.
 
 ## Yönetim Paneli
 
-- URL: `/admin.html` (`#pos`, `#history`, `#finance`, `#settings` ile sekmelere doğrudan erişilebilir)
+- URL: `/admin.html` (`#pos`, `#history`, `#finance`, `#masters`, `#kasa`, `#pay`, `#settings` ile sekmelere doğrudan erişilebilir)
 - Varsayılan şifre: `beyaz2026` (panel içinden değiştirilebilir)
 
 ### Bölümler
@@ -37,7 +37,40 @@ Ardından `http://localhost:8000` adresini açın.
 - **Gün Sonu** — Seçili günün ciro raporu: KPI'lar, usta/hizmet bazlı döküm, işlem tablosu.
   - **PDF Rapor İndir** ve **CSV** ile dışa aktarma; gün "kapatılıp" yeniden açılabilir.
 - **İş Geçmişi** — Tarih/usta/hizmet filtreleri, hızlı filtreler (Bugün / Bu Hafta / Bu Ay), PDF ve CSV çıktısı.
+- **Usta Hesapları** — Günlük/haftalık/aylık/özel aralık dönem seçimi; işlem sayısı, ciro,
+  usta hak edişi, dükkan payı, ödenen ve kalan bakiye. Usta detayında işlem listesi
+  (tarih, hizmet, ücret, uygulanan oran, usta payı) ve usta ödemesi kaydı (tarih, tutar, not).
+- **Kasa** — Nakit/kart cirosu, toplam ciro, ustalara ödenen; gün sonu kapanışında beklenen
+  nakit ile kasadaki gerçek nakit karşılaştırılır, fark (fazla/eksik) ve not gösterilir.
+  Kapatılan gün kilitlenir; sonradan değişiklik gerekçeli **düzeltme kaydı** ile yapılır.
+- **Pay Ayarları** — Varsayılan pay oranı, usta başına oran, hizmet bazlı istisna
+  (usta + hizmet) ve oran değişiklik geçmişi (kim, ne zaman, eski → yeni).
 - **Ayarlar** — Hizmet adı/fiyat düzenleme, usta yönetimi, geçmişi temizleme.
+
+### Pay (komisyon) modeli
+
+- Öncelik: **hizmet bazlı oran > usta bazlı oran > varsayılan oran**.
+- Oran, işlem kaydedilirken **snapshot** olarak işleme yazılır; sonradan oran değişimi
+  geçmiş işlemleri etkilemez.
+- Tüm parasal değerler **kuruş cinsinden tam sayı** saklanır (`amountKurus`,
+  `masterShareKurus`, `shopShareKurus`); oran çevrimi `Math.round(kurus * rate / 100)`
+  ile yapılır, floating point hatası oluşmaz.
+- Ödeme yöntemi (`paymentMethod`: `cash` / `card`) işlem akışına eklenmiştir;
+  eski kayıtlar için varsayılan `cash` kabul edilir.
+
+### Yeni tablolar (migration)
+
+`admin-pay.js` açılışta `beyaz_admin_schema` sürüm damgasını kontrol eder ve gerekirse
+migratörü çalıştırır. **Mevcut kayıtların değerleri değiştirilmez**, sadece eksik yeni
+alanlar eklenir.
+
+| Anahtar | İçerik |
+|---|---|
+| `beyaz_admin_commission` | `{ defaultRate, masterRates, serviceRates }` |
+| `beyaz_admin_rate_history` | Oran değişiklik geçmişi |
+| `beyaz_admin_master_payments` | Usta ödemeleri (tarih, usta, tutar, not) |
+| `beyaz_admin_cash_closings` | Kasa gün sonu kapanışları + düzeltme kayıtları |
+| `beyaz_admin_schema` | Migration sürümü (`2`) |
 
 ### PDF motoru
 

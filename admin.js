@@ -1,421 +1,1225 @@
-const JOBS_KEY = 'beyaz_admin_jobs';
-const SVCS_KEY = 'beyaz_admin_services';
-const MASTERS_KEY = 'beyaz_admin_masters';
+/* ==========================================================================
+   Beyaz Kuaför — Yönetim Paneli
+   ========================================================================== */
+(() => {
+  'use strict';
 
-const DEFAULT_SVCS = [
-  { name: 'Erkek Saç Kesimi', price: 200 },
-  { name: 'Sakal Tıraşı', price: 150 },
-  { name: 'Saç & Sakal Paketi', price: 300 }
-];
-const DEFAULT_MASTERS = ['Usta 1', 'Usta 2', 'Usta 3'];
+  const JOBS_KEY = 'beyaz_admin_jobs';
+  const SVCS_KEY = 'beyaz_admin_services';
+  const MASTERS_KEY = 'beyaz_admin_masters';
+  const CLOSED_KEY = 'beyaz_admin_closed_days';
 
-// ---------- Storage helpers ----------
-function safeGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
-function safeSet(key, val) { try { localStorage.setItem(key, val); } catch {} }
-function getJobs() { try { return JSON.parse(safeGet(JOBS_KEY) || '[]'); } catch { return []; } }
-function saveJobs(j) { safeSet(JOBS_KEY, JSON.stringify(j)); }
-function getSvcs() {
-  try {
-    const s = JSON.parse(safeGet(SVCS_KEY));
-    if (Array.isArray(s) && s.length) return s;
-  } catch {}
-  return DEFAULT_SVCS.map(x => ({...x}));
-}
-function saveSvcs(s) { safeSet(SVCS_KEY, JSON.stringify(s)); }
-function getMasters() {
-  try {
-    const s = JSON.parse(safeGet(MASTERS_KEY));
-    if (Array.isArray(s) && s.length) return s;
-  } catch {}
-  return [...DEFAULT_MASTERS];
-}
-function saveMasters(m) { safeSet(MASTERS_KEY, JSON.stringify(m)); }
+  const DEFAULT_SVCS = [
+    { name: 'Erkek Saç Kesimi', price: 200 },
+    { name: 'Sakal Tıraşı', price: 150 },
+    { name: 'Saç & Sakal Paketi', price: 300 }
+  ];
+  const DEFAULT_MASTERS = ['Usta 1', 'Usta 2', 'Usta 3'];
 
-function fmtDate(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric' });
-}
-function todayISO() { return new Date().toISOString().split('T')[0]; }
-function nowTime() {
-  const n = new Date();
-  return String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
-}
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function svcPrice(name) { const s = getSvcs().find(x => x.name === name); return s ? s.price : 0; }
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-// ---------- State ----------
-const state = {
-  selected: [],   // service names in transaction
-  master: null,
-  manualDelta: 0, // adjustment on top of auto sum
-};
+  /* ------------------------------------------------------------------
+     Depolama
+  ------------------------------------------------------------------ */
+  const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 
-function autoSum() { return state.selected.reduce((a, n) => a + svcPrice(n), 0); }
-function totalAmount() { return autoSum() + state.manualDelta; }
+  const getJobs = () => { try { return JSON.parse(safeGet(JOBS_KEY) || '[]'); } catch { return []; } };
+  const saveJobs = (j) => safeSet(JOBS_KEY, JSON.stringify(j));
+  const getSvcs = () => {
+    try {
+      const s = JSON.parse(safeGet(SVCS_KEY));
+      if (Array.isArray(s) && s.length) return s;
+    } catch {}
+    return DEFAULT_SVCS.map((x) => ({ ...x }));
+  };
+  const saveSvcs = (s) => safeSet(SVCS_KEY, JSON.stringify(s));
+  const getMasters = () => {
+    try {
+      const s = JSON.parse(safeGet(MASTERS_KEY));
+      if (Array.isArray(s) && s.length) return s;
+    } catch {}
+    return [...DEFAULT_MASTERS];
+  };
+  const saveMasters = (m) => safeSet(MASTERS_KEY, JSON.stringify(m));
+  const getClosedDays = () => { try { const s = JSON.parse(safeGet(CLOSED_KEY)); return Array.isArray(s) ? s : []; } catch { return []; } };
+  const saveClosedDays = (d) => safeSet(CLOSED_KEY, JSON.stringify(d));
 
-// ---------- Stats ----------
-function renderStats() {
-  const jobs = getJobs();
-  const today = todayISO();
-  const thisMonth = today.slice(0,7);
-  const todayJobs = jobs.filter(j => j.date === today);
-  const monthJobs = jobs.filter(j => j.date.startsWith(thisMonth));
-  document.getElementById('stToday').textContent = todayJobs.length;
-  document.getElementById('stTodayAmt').textContent = sum(todayJobs) + '₺';
-  document.getElementById('stMonth').textContent = monthJobs.length;
-  document.getElementById('stMonthAmt').textContent = sum(monthJobs) + '₺';
-  document.getElementById('stAll').textContent = jobs.length;
-  document.getElementById('stAllAmt').textContent = sum(jobs) + '₺';
-  const counts = {};
-  jobs.forEach(j => (j.services || [j.service]).forEach(s => counts[s] = (counts[s]||0)+1));
-  let top = '—', max = 0;
-  for (const k in counts) if (counts[k] > max) { max = counts[k]; top = k; }
-  document.getElementById('stTop').textContent = top;
-}
-function sum(arr) { return arr.reduce((a,b) => a + (b.amount||0), 0); }
+  /* ------------------------------------------------------------------
+     Yardımcılar
+  ------------------------------------------------------------------ */
+  const fmtDate = (iso) => {
+    if (!iso) return '—';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+  const fmtDateLong = (iso) => {
+    if (!iso) return '—';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+  };
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const nowTime = () => {
+    const n = new Date();
+    return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+  };
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = (n) => `${Math.round(Number(n) || 0).toLocaleString('tr-TR')} ₺`;
+  const sum = (arr) => arr.reduce((a, b) => a + (b.amount || 0), 0);
+  const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const svcPrice = (name) => { const s = getSvcs().find((x) => x.name === name); return s ? s.price : 0; };
+  const servicesOf = (j) => (Array.isArray(j.services) && j.services.length ? j.services : [j.service].filter(Boolean));
 
-// ---------- Service boxes ----------
-function renderServices() {
-  const container = document.getElementById('svcBoxes');
-  container.innerHTML = '';
-  getSvcs().forEach(s => {
-    const box = document.createElement('div');
-    box.className = 'adm-svcbox' + (state.selected.includes(s.name) ? ' selected' : '');
-    box.dataset.name = s.name;
-    box.innerHTML = `
-      <div class="name">${escapeHtml(s.name)}</div>
-      <div class="price">Fiyat: <strong>${s.price} ₺</strong></div>
-      <div class="detail"><span class="fee">${s.price} ₺</span> — tıkla/kaldır</div>
-    `;
-    box.addEventListener('click', () => {
-      box.classList.toggle('open');
-      if (state.selected.includes(s.name)) {
-        state.selected = state.selected.filter(x => x !== s.name);
-      } else {
-        state.selected.push(s.name);
+  /* ------------------------------------------------------------------
+     Durum
+  ------------------------------------------------------------------ */
+  const state = { selected: [], master: null, manualDelta: 0 };
+  const autoSum = () => state.selected.reduce((a, n) => a + svcPrice(n), 0);
+  const totalAmount = () => autoSum() + state.manualDelta;
+
+  /* ------------------------------------------------------------------
+     Toast
+  ------------------------------------------------------------------ */
+  function toast(msg, kind = 'ok') {
+    const box = $('#admToasts');
+    const el = document.createElement('div');
+    el.className = `adm-toast adm-toast--${kind}`;
+    const icon = kind === 'ok' ? '#i-check' : '#i-x';
+    el.innerHTML = `<svg><use href="${icon}"/></svg><span>${escapeHtml(msg)}</span>`;
+    box.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('is-out');
+      setTimeout(() => el.remove(), 260);
+    }, 2600);
+  }
+
+  /* ==================================================================
+     GÖRÜNÜMLER (view yönetimi)
+  ================================================================== */
+  const VIEW_META = {
+    pos: { title: 'Yeni İşlem', sub: 'Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.' },
+    history: { title: 'İş Geçmişi', sub: 'Kayıtlı tüm işlemleri filtreleyin, inceleyin ve raporlayın.' },
+    settings: { title: 'Ayarlar', sub: 'Hizmet fiyatlarını ve usta listesini yönetin.' }
+  };
+
+  let currentView = 'pos';
+
+  function switchView(name, skipHash) {
+    currentView = name;
+    $$('.adm-view').forEach((v) => v.classList.toggle('is-active', v.dataset.view === name));
+    $$('.adm-navitem').forEach((b) => b.classList.toggle('is-active', b.dataset.view === name));
+    const meta = VIEW_META[name] || VIEW_META.pos;
+    $('#admPageTitle').textContent = meta.title;
+    $('#admPageSub').textContent = meta.sub;
+    $('.adm-content').scrollTop = 0;
+    if (name === 'history') renderJobs();
+    if (name === 'settings') renderSettings();
+    if (name === 'pos') { renderDoneList(); renderDayStatus(); }
+    if (!skipHash) {
+      try { history.replaceState(null, '', '#' + name); } catch {}
+    }
+  }
+
+  window.addEventListener('hashchange', () => {
+    const v = location.hash.replace('#', '');
+    if (VIEW_META[v] && v !== currentView) switchView(v, true);
+  });
+
+  $$('.adm-navitem').forEach((btn) => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  /* ==================================================================
+     KPI / İstatistik
+  ================================================================== */
+  function renderStats() {
+    const jobs = getJobs();
+    const today = todayISO();
+    const thisMonth = today.slice(0, 7);
+    const todayJobs = jobs.filter((j) => j.date === today);
+    const monthJobs = jobs.filter((j) => (j.date || '').startsWith(thisMonth));
+
+    $('#kpiTodayCount').textContent = todayJobs.length;
+    $('#kpiTodayAmount').textContent = money(sum(todayJobs));
+    $('#kpiMonthCount').textContent = monthJobs.length;
+    $('#kpiMonthAmount').textContent = money(sum(monthJobs));
+    $('#kpiAllCount').textContent = jobs.length;
+    $('#kpiAllAmount').textContent = money(sum(jobs));
+
+    const counts = {};
+    jobs.forEach((j) => servicesOf(j).forEach((s) => { counts[s] = (counts[s] || 0) + 1; }));
+    let top = '—', max = 0;
+    for (const k in counts) if (counts[k] > max) { max = counts[k]; top = k; }
+    $('#kpiTopName').textContent = top;
+    $('#kpiTopCount').textContent = `${max} kez`;
+
+    $('#sideToday').textContent = todayJobs.length;
+    $('#navJobCount').textContent = jobs.length;
+  }
+
+  /* ==================================================================
+     Hizmetler
+  ================================================================== */
+  function renderServices() {
+    const container = $('#svcBoxes');
+    container.innerHTML = '';
+    getSvcs().forEach((s) => {
+      const box = document.createElement('button');
+      box.type = 'button';
+      box.className = 'adm-svc';
+      box.dataset.name = s.name;
+      box.innerHTML = `
+        <span class="adm-svc__name">${escapeHtml(s.name)}</span>
+        <span class="adm-svc__meta">
+          <span class="adm-svc__price">${money(s.price)}</span>
+          <span class="adm-svc__tag">Hizmet</span>
+        </span>`;
+      box.addEventListener('click', () => {
+        if (state.selected.includes(s.name)) {
+          state.selected = state.selected.filter((x) => x !== s.name);
+        } else {
+          state.selected.push(s.name);
+        }
+        renderAll();
+      });
+      container.appendChild(box);
+    });
+    renderPresets();
+    syncServiceUI();
+  }
+
+  /* Seçim görselini DOM'u yeniden kurmadan günceller */
+  function syncServiceUI() {
+    $$('#svcBoxes .adm-svc').forEach((box) => {
+      const name = box.dataset.name;
+      const idx = state.selected.indexOf(name);
+      const selected = idx > -1;
+      box.classList.toggle('is-selected', selected);
+
+      let badge = box.querySelector('.adm-svc__idx');
+      if (selected && !badge) {
+        badge = document.createElement('span');
+        badge.className = 'adm-svc__idx';
+        box.insertBefore(badge, box.firstChild);
+      } else if (!selected && badge) {
+        badge.remove();
       }
-      box.classList.toggle('selected', state.selected.includes(s.name));
-      renderAll();
-    });
-    container.appendChild(box);
-  });
-  // presets for amount: use selected service prices + common
-  renderPresets();
-}
+      if (badge) badge.textContent = idx + 1;
 
-function renderPresets() {
-  const container = document.getElementById('amtPresets');
-  container.innerHTML = '';
-  const vals = [50, 100, 150, 200, 250, 300, 400, 500];
-  vals.forEach(v => {
-    const b = document.createElement('button');
-    b.className = 'adm-preset';
-    b.textContent = v + ' ₺';
-    b.addEventListener('click', () => {
-      state.manualDelta = v - autoSum();
-      renderAll();
+      const tag = box.querySelector('.adm-svc__tag');
+      if (tag) tag.textContent = selected ? 'Seçildi' : 'Hizmet';
     });
-    container.appendChild(b);
-  });
-}
+  }
 
-// ---------- Masters ----------
-function renderMasters() {
-  const container = document.getElementById('masterBoxes');
-  container.innerHTML = '';
-  getMasters().forEach(m => {
-    const box = document.createElement('div');
-    box.className = 'adm-masterbox' + (state.master === m ? ' selected' : '');
-    box.textContent = m;
-    box.addEventListener('click', () => {
-      state.master = (state.master === m) ? null : m;
-      renderMasters();
+  function renderPresets() {
+    const container = $('#amtPresets');
+    container.innerHTML = '';
+    [50, 100, 150, 200, 250, 300, 400, 500].forEach((v) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'adm-preset';
+      b.textContent = money(v);
+      b.addEventListener('click', () => {
+        state.manualDelta = v - autoSum();
+        renderAll();
+      });
+      container.appendChild(b);
+    });
+  }
+
+  /* ==================================================================
+     Ustalar
+  ================================================================== */
+  function renderMasters() {
+    const container = $('#masterBoxes');
+    container.innerHTML = '';
+    getMasters().forEach((m) => {
+      const box = document.createElement('button');
+      box.type = 'button';
+      box.className = 'adm-master';
+      box.dataset.name = m;
+      box.innerHTML = `<span class="adm-master__avatar">${escapeHtml(initials(m))}</span><span>${escapeHtml(m)}</span>`;
+      box.addEventListener('click', () => {
+        state.master = state.master === m ? null : m;
+        renderAll();
+      });
+      container.appendChild(box);
+    });
+    syncMasterUI();
+  }
+
+  function syncMasterUI() {
+    $$('#masterBoxes .adm-master').forEach((box) => {
+      box.classList.toggle('is-selected', box.dataset.name === state.master);
+    });
+  }
+
+  /* ==================================================================
+     Ekstra hizmet
+  ================================================================== */
+  function renderExtras() {
+    const container = $('#extraChips');
+    container.innerHTML = '';
+    const extras = state.selected.slice(1);
+    if (!extras.length) {
+      container.innerHTML = '<span class="adm-chips__empty">Ekstra hizmet eklenmedi</span>';
+      return;
+    }
+    extras.forEach((name, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'adm-chip';
+      chip.innerHTML = `<span>${escapeHtml(name)}</span><button type="button" title="Kaldır">✕</button>`;
+      chip.querySelector('button').addEventListener('click', () => {
+        state.selected.splice(i + 1, 1);
+        renderAll();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  /* ==================================================================
+     Özet
+  ================================================================== */
+  function renderSummary() {
+    const container = $('#summaryList');
+    container.innerHTML = '';
+    if (!state.selected.length && !state.master) {
+      container.innerHTML = '<div class="adm-summarylist__empty">Henüz seçim yapılmadı</div>';
+    }
+    state.selected.forEach((name) => {
+      const div = document.createElement('div');
+      div.className = 'adm-summarylist__row';
+      div.innerHTML = `<span>${escapeHtml(name)}</span><span>${money(svcPrice(name))}</span>`;
+      container.appendChild(div);
+    });
+    if (state.master) {
+      const div = document.createElement('div');
+      div.className = 'adm-summarylist__row adm-summarylist__row--master';
+      div.innerHTML = `<span>Usta</span><span>${escapeHtml(state.master)}</span>`;
+      container.appendChild(div);
+    }
+    $('#amountDisplay').textContent = money(totalAmount());
+    $('#totalAmt').textContent = money(totalAmount());
+
+    const deltaEl = $('#amountDelta');
+    if (deltaEl) {
+      const d = state.manualDelta;
+      if (d > 0) {
+        deltaEl.className = 'adm-amount__delta is-plus';
+        deltaEl.textContent = `+${money(d)} düzeltme`;
+      } else if (d < 0) {
+        deltaEl.className = 'adm-amount__delta is-minus';
+        deltaEl.textContent = `−${money(Math.abs(d))} düzeltme`;
+      } else {
+        deltaEl.className = 'adm-amount__delta is-zero';
+        deltaEl.textContent = 'Otomatik hesap';
+      }
+    }
+  }
+
+  function renderAll() {
+    syncServiceUI();
+    syncMasterUI();
+    renderExtras();
+    renderSummary();
+  }
+
+  /* ==================================================================
+     Tamamlanan işlemler (sağ panel)
+  ================================================================== */
+  function todayJobs() {
+    const t = todayISO();
+    return getJobs().filter((j) => j.date === t).sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+  }
+
+  function renderDoneList() {
+    const jobs = todayJobs();
+    const box = $('#doneList');
+    $('#doneCount').textContent = jobs.length;
+    $('#doneTotal').textContent = money(sum(jobs));
+
+    if (!jobs.length) {
+      box.innerHTML = `
+        <div class="adm-donelist__empty">
+          <svg><use href="#i-receipt"/></svg>
+          <p>Henüz işlem yok</p>
+          <span>Tamamlanan işlemler burada listelenir</span>
+        </div>`;
+      return;
+    }
+
+    box.innerHTML = '';
+    jobs.forEach((j) => {
+      const row = document.createElement('div');
+      row.className = 'adm-done';
+      row.innerHTML = `
+        <span class="adm-done__badge">${escapeHtml((j.time || '--:--'))}</span>
+        <div class="adm-done__body">
+          <div class="adm-done__top">
+            <span class="adm-done__name">${escapeHtml(j.master || '—')}</span>
+            <span class="adm-done__amt">${money(j.amount)}</span>
+          </div>
+          <div class="adm-done__meta">${escapeHtml(servicesOf(j).join(' · '))}</div>
+        </div>
+        <button type="button" class="adm-done__del" title="Kaydı sil">
+          <svg><use href="#i-trash"/></svg>
+        </button>`;
+      row.querySelector('.adm-done__del').addEventListener('click', () => {
+        if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+        saveJobs(getJobs().filter((x) => x.id !== j.id));
+        renderDoneList();
+        renderStats();
+        toast('Kayıt silindi');
+      });
+      box.appendChild(row);
+    });
+  }
+
+  function renderDayStatus() {
+    const el = $('#dayStatus');
+    const closed = getClosedDays().includes(todayISO());
+    el.classList.toggle('is-closed', closed);
+    el.textContent = closed ? '⚑ Bugün için gün sonu yapıldı' : '';
+  }
+
+  /* ==================================================================
+     İşlemi Tamamla
+  ================================================================== */
+  $$('.adm-amtbtn, .adm-stepbtn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.manualDelta += parseInt(btn.dataset.delta, 10);
       renderSummary();
     });
-    container.appendChild(box);
   });
-}
 
-// ---------- Extra chips ----------
-function renderExtras() {
-  const container = document.getElementById('extraChips');
-  container.innerHTML = '';
-  // extras = all selected except first
-  state.selected.slice(1).forEach((name, i) => {
-    const chip = document.createElement('span');
-    chip.className = 'adm-chip';
-    chip.innerHTML = `${escapeHtml(name)} <button data-i="${i+1}">✕</button>`;
-    chip.querySelector('button').addEventListener('click', () => {
-      state.selected.splice(i+1, 1);
-      renderAll();
+  $('#completeBtn').addEventListener('click', () => {
+    if (!state.selected.length) { toast('Hizmet seçin.', 'err'); return; }
+    if (!state.master) { toast('Usta seçin.', 'err'); return; }
+
+    const job = {
+      id: 'J' + Date.now() + Math.floor(Math.random() * 1000),
+      date: todayISO(),
+      time: nowTime(),
+      master: state.master,
+      services: [...state.selected],
+      service: state.selected.join(' + '),
+      amount: totalAmount(),
+      createdAt: new Date().toISOString()
+    };
+    const jobs = getJobs();
+    jobs.push(job);
+    saveJobs(jobs);
+
+    state.selected = [];
+    state.master = null;
+    state.manualDelta = 0;
+
+    renderAll();
+    renderStats();
+    renderDoneList();
+    toast(`İşlem kaydedildi · ${money(job.amount)}`);
+  });
+
+  /* ==================================================================
+     Modal yönetimi
+  ================================================================== */
+  const openModal = (id) => {
+    const m = $('#' + id);
+    if (!m) return;
+    m.classList.add('is-open');
+    const f = m.querySelector('input, button');
+    if (f) setTimeout(() => f.focus(), 60);
+  };
+  const closeModal = (id) => { const m = $('#' + id); if (m) m.classList.remove('is-open'); };
+  const closeAllModals = () => $$('.adm-modal').forEach((m) => m.classList.remove('is-open'));
+
+  $$('[data-close]').forEach((b) => b.addEventListener('click', () => closeModal(b.dataset.close)));
+  $$('.adm-modal').forEach((m) => {
+    m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('is-open'); });
+  });
+
+  /* ==================================================================
+     Ekstra hizmet seçimi
+  ================================================================== */
+  $('#extraPickBtn').addEventListener('click', () => {
+    const list = $('#extraPickList');
+    list.innerHTML = '';
+    getSvcs().forEach((s) => {
+      const box = document.createElement('button');
+      box.type = 'button';
+      box.className = 'adm-svc';
+      box.innerHTML = `<span class="adm-svc__name">${escapeHtml(s.name)}</span><span class="adm-svc__price">${money(s.price)}</span>`;
+      box.addEventListener('click', () => {
+        if (!state.selected.includes(s.name)) state.selected.push(s.name);
+        closeModal('extraModal');
+        renderAll();
+        toast(`${s.name} eklendi`);
+      });
+      list.appendChild(box);
     });
-    container.appendChild(chip);
+    openModal('extraModal');
   });
-  if (!state.selected.slice(1).length) {
-    container.innerHTML = '<span style="color:var(--muted);font-size:12px;">Ekstra yok</span>';
-  }
-}
 
-// ---------- Summary ----------
-function renderSummary() {
-  const container = document.getElementById('summaryList');
-  container.innerHTML = '';
-  state.selected.forEach(name => {
-    const div = document.createElement('div');
-    div.innerHTML = `<span>${escapeHtml(name)}</span><span>${svcPrice(name)} ₺</span>`;
-    container.appendChild(div);
+  /* ==================================================================
+     Hızlı ekleme
+  ================================================================== */
+  $('#addSvcQuick').addEventListener('click', () => { $('#qsName').value = ''; $('#qsPrice').value = ''; openModal('addSvcModal'); });
+  $('#qsSave').addEventListener('click', () => {
+    const name = $('#qsName').value.trim();
+    const price = parseFloat($('#qsPrice').value);
+    if (!name) { toast('Hizmet adı girin.', 'err'); return; }
+    if (isNaN(price)) { toast('Fiyat girin.', 'err'); return; }
+    const svcs = getSvcs();
+    svcs.push({ name, price });
+    saveSvcs(svcs);
+    closeModal('addSvcModal');
+    renderServices();
+    toast('Hizmet eklendi');
   });
-  if (state.master) {
-    const div = document.createElement('div');
-    div.innerHTML = `<span>Usta</span><span>${escapeHtml(state.master)}</span>`;
-    container.appendChild(div);
-  }
-  document.getElementById('amountDisplay').textContent = totalAmount() + ' ₺';
-  document.getElementById('totalAmt').textContent = totalAmount() + ' ₺';
-}
 
-function renderAll() {
+  $('#addMasterQuick').addEventListener('click', () => { $('#qmName').value = ''; openModal('addMasterModal'); });
+  $('#qmSave').addEventListener('click', () => {
+    const name = $('#qmName').value.trim();
+    if (!name) { toast('Ad girin.', 'err'); return; }
+    const ms = getMasters();
+    ms.push(name);
+    saveMasters(ms);
+    closeModal('addMasterModal');
+    renderMasters();
+    toast('Usta eklendi');
+  });
+
+  /* ==================================================================
+     Ayarlar
+  ================================================================== */
+  function renderSettings() {
+    const svcContainer = $('#svcList');
+    svcContainer.innerHTML = '';
+    const svcs = getSvcs();
+    $('#svcCount').textContent = svcs.length;
+    svcs.forEach((s, idx) => {
+      const row = document.createElement('div');
+      row.className = 'adm-svcrow';
+      row.innerHTML = `
+        <input type="text" class="adm-svcrow__name" value="${escapeHtml(s.name)}" data-name="${idx}" aria-label="Hizmet adı" />
+        <input type="number" value="${s.price}" data-price="${idx}" min="0" aria-label="Fiyat" />
+        <span class="adm-svcrow__unit">₺</span>
+        <button type="button" class="adm-del" data-del="${idx}" title="Sil"><svg><use href="#i-trash"/></svg></button>`;
+      svcContainer.appendChild(row);
+    });
+    svcContainer.querySelectorAll('[data-price]').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const list = getSvcs();
+        list[inp.dataset.price].price = parseFloat(inp.value) || 0;
+        saveSvcs(list);
+        renderServices();
+        renderSummary();
+        toast('Fiyat güncellendi');
+      });
+    });
+    svcContainer.querySelectorAll('[data-name]').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const list = getSvcs();
+        const idx = Number(inp.dataset.name);
+        const v = inp.value.trim();
+        const old = list[idx].name;
+        if (!v) { inp.value = old; return; }
+        list[idx].name = v;
+        saveSvcs(list);
+        state.selected = state.selected.map((n) => (n === old ? v : n));
+        renderServices();
+        renderSummary();
+        toast('Hizmet adı güncellendi');
+      });
+    });
+    svcContainer.querySelectorAll('[data-del]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const list = getSvcs();
+        if (list.length <= 1) { toast('En az bir hizmet kalmalı.', 'err'); return; }
+        list.splice(btn.dataset.del, 1);
+        saveSvcs(list);
+        renderSettings();
+        renderServices();
+        toast('Hizmet silindi');
+      });
+    });
+
+    const mContainer = $('#masterList');
+    mContainer.innerHTML = '';
+    const masters = getMasters();
+    $('#masterCount').textContent = masters.length;
+    masters.forEach((m, idx) => {
+      const row = document.createElement('div');
+      row.className = 'adm-svcrow';
+      row.innerHTML = `
+        <span class="adm-master__avatar">${escapeHtml(initials(m))}</span>
+        <span class="adm-svcrow__name">${escapeHtml(m)}</span>
+        <button type="button" class="adm-del" data-del="${idx}" title="Sil"><svg><use href="#i-trash"/></svg></button>`;
+      mContainer.appendChild(row);
+    });
+    mContainer.querySelectorAll('[data-del]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ms = getMasters();
+        if (ms.length <= 1) { toast('En az bir usta kalmalı.', 'err'); return; }
+        ms.splice(btn.dataset.del, 1);
+        saveMasters(ms);
+        renderSettings();
+        renderMasters();
+        toast('Usta silindi');
+      });
+    });
+  }
+
+  $('#addSvcBtn').addEventListener('click', () => {
+    const name = $('#newSvcName').value.trim();
+    const price = parseFloat($('#newSvcPrice').value);
+    if (!name) { toast('Hizmet adı girin.', 'err'); return; }
+    if (isNaN(price)) { toast('Fiyat girin.', 'err'); return; }
+    const svcs = getSvcs();
+    svcs.push({ name, price });
+    saveSvcs(svcs);
+    $('#newSvcName').value = '';
+    $('#newSvcPrice').value = '';
+    renderSettings();
+    renderServices();
+    toast('Hizmet eklendi');
+  });
+
+  $('#addMasterBtn').addEventListener('click', () => {
+    const name = $('#newMasterName').value.trim();
+    if (!name) { toast('Usta adı girin.', 'err'); return; }
+    const ms = getMasters();
+    ms.push(name);
+    saveMasters(ms);
+    $('#newMasterName').value = '';
+    renderSettings();
+    renderMasters();
+    toast('Usta eklendi');
+  });
+
+  $('#clearJobsBtn').addEventListener('click', () => {
+    if (!confirm('TÜM işlem geçmişi kalıcı olarak silinecek. Emin misiniz?')) return;
+    saveJobs([]);
+    renderStats();
+    renderDoneList();
+    toast('Tüm geçmiş silindi');
+  });
+
+  /* ==================================================================
+     Geçmiş / filtreler
+  ================================================================== */
+  let filteredJobs = [];
+
+  function currentFilter() {
+    const from = $('#fFrom').value;
+    const to = $('#fTo').value;
+    const q = $('#fSearch').value.trim().toLowerCase();
+    let jobs = getJobs();
+    if (from) jobs = jobs.filter((j) => j.date >= from);
+    if (to) jobs = jobs.filter((j) => j.date <= to);
+    if (q) jobs = jobs.filter((j) => (servicesOf(j).join(' ') + ' ' + (j.master || '')).toLowerCase().includes(q));
+    return jobs.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+  }
+
+  function renderJobs() {
+    filteredJobs = currentFilter();
+    const tbody = $('#jobBody');
+    tbody.innerHTML = '';
+    const empty = $('#jobEmpty');
+
+    $('#histCount').textContent = filteredJobs.length;
+    $('#histTotal').textContent = money(sum(filteredJobs));
+    $('#histAvg').textContent = `Ort. ${money(filteredJobs.length ? sum(filteredJobs) / filteredJobs.length : 0)}`;
+
+    if (filteredJobs.length) {
+      const last = filteredJobs[0];
+      $('#histLast').textContent = fmtDate(last.date);
+      $('#histLastMeta').textContent = `${last.time || ''} · ${last.master || '—'}`;
+    } else {
+      $('#histLast').textContent = '—';
+      $('#histLastMeta').textContent = '—';
+    }
+
+    if (!filteredJobs.length) { empty.classList.add('is-visible'); return; }
+    empty.classList.remove('is-visible');
+
+    filteredJobs.forEach((j) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="adm-table__date">${fmtDate(j.date)}</td>
+        <td class="adm-table__time">${j.time || '—'}</td>
+        <td><span class="adm-table__master"><i>${escapeHtml(initials(j.master))}</i>${escapeHtml(j.master || '—')}</span></td>
+        <td class="adm-table__svc">${escapeHtml(servicesOf(j).join(' · '))}</td>
+        <td class="ta-right"><strong>${money(j.amount)}</strong></td>
+        <td class="ta-center"><button type="button" class="adm-del" title="Sil"><svg><use href="#i-trash"/></svg></button></td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('.adm-del').forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        const job = filteredJobs[i];
+        if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+        saveJobs(getJobs().filter((x) => x.id !== job.id));
+        renderJobs();
+        renderStats();
+        renderDoneList();
+        toast('Kayıt silindi');
+      });
+    });
+  }
+
+  $('#applyFilter').addEventListener('click', renderJobs);
+  $('#fSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') renderJobs(); });
+  $('#clearFilter').addEventListener('click', () => {
+    $('#fFrom').value = '';
+    $('#fTo').value = '';
+    $('#fSearch').value = '';
+    $$('.adm-chipbtn').forEach((b) => b.classList.toggle('is-active', b.dataset.quick === 'all'));
+    renderJobs();
+  });
+
+  $$('.adm-chipbtn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('.adm-chipbtn').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      const today = todayISO();
+      const d = new Date();
+      if (btn.dataset.quick === 'today') {
+        $('#fFrom').value = today; $('#fTo').value = today;
+      } else if (btn.dataset.quick === 'week') {
+        const start = new Date(d); start.setDate(d.getDate() - d.getDay() + 1);
+        const iso = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+        $('#fFrom').value = iso(start); $('#fTo').value = today;
+      } else if (btn.dataset.quick === 'month') {
+        $('#fFrom').value = today.slice(0, 8) + '01'; $('#fTo').value = today;
+      } else {
+        $('#fFrom').value = ''; $('#fTo').value = '';
+      }
+      renderJobs();
+    });
+  });
+
+  /* ---------------------------- CSV ---------------------------- */
+  function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function jobsToCsv(jobs) {
+    const header = ['Tarih', 'Saat', 'Usta', 'Hizmetler', 'Ücret'];
+    const rows = jobs.map((j) => [j.date, j.time || '', j.master || '', servicesOf(j).join(' + '), j.amount]);
+    return [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  }
+
+  $('#exportBtn').addEventListener('click', () => {
+    const jobs = filteredJobs.length ? filteredJobs : getJobs();
+    if (!jobs.length) { toast('Dışa aktarılacak kayıt yok.', 'err'); return; }
+    downloadBlob('\uFEFF' + jobsToCsv(jobs), 'beyaz-kuafor-is-gecmisi.csv', 'text/csv;charset=utf-8;');
+    toast('CSV indirildi');
+  });
+
+  /* ==================================================================
+     GÜN SONU RAPORU
+  ================================================================== */
+  function jobsOfDate(date) {
+    return getJobs().filter((j) => j.date === date).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  }
+
+  function groupBy(items) {
+    const map = new Map();
+    items.forEach((it) => {
+      const cur = map.get(it.name) || { name: it.name, count: 0, amount: 0 };
+      cur.count += 1; cur.amount += it.amount;
+      map.set(it.name, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
+  }
+
+  function reportData(jobs) {
+    const masters = [];
+    const services = [];
+    jobs.forEach((j) => {
+      masters.push({ name: j.master || '—', amount: j.amount || 0 });
+      servicesOf(j).forEach((s) => services.push({ name: s, amount: svcPrice(s) || 0 }));
+    });
+    return {
+      total: sum(jobs),
+      count: jobs.length,
+      avg: jobs.length ? sum(jobs) / jobs.length : 0,
+      masters: groupBy(masters),
+      services: groupBy(services)
+    };
+  }
+
+  function renderDayEnd() {
+    const date = $('#dayEndDate').value || todayISO();
+    const jobs = jobsOfDate(date);
+    const d = reportData(jobs);
+    const closed = getClosedDays().includes(date);
+
+    let html = '';
+
+    html += `<div class="adm-report__kpis">
+      <div class="adm-rkpi adm-rkpi--gold"><span>Toplam Ciro</span><strong>${money(d.total)}</strong></div>
+      <div class="adm-rkpi"><span>İşlem Sayısı</span><strong>${d.count}</strong></div>
+      <div class="adm-rkpi"><span>Ortalama Tut</span><strong>${money(d.avg)}</strong></div>
+      <div class="adm-rkpi"><span>Durum</span><strong style="font-size:15px">${closed ? 'Gün Sonu Yapıldı' : 'Açık'}</strong></div>
+    </div>`;
+
+    html += `<div class="adm-report__cols">
+      <div class="adm-report__block">
+        <h4>Usta Bazlı Ciro</h4>
+        ${breakdownHtml(d.masters, d.total)}
+      </div>
+      <div class="adm-report__block">
+        <h4>Hizmet Bazlı Ciro</h4>
+        ${breakdownHtml(d.services, d.total)}
+      </div>
+    </div>`;
+
+    html += `<div class="adm-report__block">
+      <h4>İşlem Detayları</h4>
+      <div class="adm-tablewrap">
+        <table class="adm-table">
+          <thead><tr><th>Saat</th><th>Usta</th><th>Hizmetler</th><th class="ta-right">Ücret</th></tr></thead>
+          <tbody>
+            ${jobs.length ? jobs.map((j) => `<tr>
+              <td class="adm-table__time">${j.time || '—'}</td>
+              <td>${escapeHtml(j.master || '—')}</td>
+              <td class="adm-table__svc">${escapeHtml(servicesOf(j).join(' · '))}</td>
+              <td class="ta-right"><strong>${money(j.amount)}</strong></td>
+            </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;padding:26px;color:var(--faint)">Bu tarihte kayıtlı işlem bulunmuyor.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+    $('#dayEndBody').innerHTML = html;
+    $('#dayEndToggle').querySelector('span').textContent = closed ? 'Günü Yeniden Aç' : 'Günü Kapat';
+    $('#dayEndToggle').classList.toggle('adm-btn--outline', closed);
+    $('#dayEndToggle').classList.toggle('adm-btn--dark', !closed);
+  }
+
+  function breakdownHtml(rows, total) {
+    if (!rows.length) return '<div class="adm-break__empty">Veri yok</div>';
+    const max = Math.max(...rows.map((r) => r.amount), 1);
+    return `<div class="adm-break">${rows.map((r) => `
+      <div class="adm-break__row">
+        <div class="adm-break__top">
+          <span class="adm-break__name">${escapeHtml(r.name)}</span>
+          <span class="adm-break__val">${r.count} işlem · ${money(r.amount)}</span>
+        </div>
+        <div class="adm-break__track"><div class="adm-break__fill" style="width:${Math.round((r.amount / max) * 100)}%"></div></div>
+      </div>`).join('')}</div>`;
+  }
+
+  $('#dayEndBtn').addEventListener('click', () => {
+    $('#dayEndDate').value = todayISO();
+    renderDayEnd();
+    openModal('dayEndModal');
+  });
+  $('#dayEndRefresh').addEventListener('click', renderDayEnd);
+  $('#dayEndDate').addEventListener('change', renderDayEnd);
+
+  $('#dayEndToggle').addEventListener('click', () => {
+    const date = $('#dayEndDate').value || todayISO();
+    const list = getClosedDays();
+    const i = list.indexOf(date);
+    if (i > -1) list.splice(i, 1); else list.push(date);
+    saveClosedDays(list);
+    renderDayEnd();
+    renderDayStatus();
+    toast(i > -1 ? 'Gün yeniden açıldı' : 'Gün sonu yapıldı');
+  });
+
+  $('#dayEndCsv').addEventListener('click', () => {
+    const date = $('#dayEndDate').value || todayISO();
+    const jobs = jobsOfDate(date);
+    if (!jobs.length) { toast('Dışa aktarılacak kayıt yok.', 'err'); return; }
+    downloadBlob('\uFEFF' + jobsToCsv(jobs), `beyaz-kuafor-gun-sonu-${date}.csv`, 'text/csv;charset=utf-8;');
+    toast('CSV indirildi');
+  });
+
+  $('#dayEndPdf').addEventListener('click', async () => {
+    const date = $('#dayEndDate').value || todayISO();
+    const jobs = jobsOfDate(date);
+    await exportReportPDF(jobs, {
+      title: 'GÜN SONU RAPORU',
+      subtitle: 'Günlük ciro ve işlem dökümü',
+      dateLabel: fmtDateLong(date),
+      file: `beyaz-kuafor-gun-sonu-${date}.pdf`
+    });
+  });
+
+  $('#exportPdfBtn').addEventListener('click', async () => {
+    const jobs = filteredJobs.length ? filteredJobs : getJobs();
+    if (!jobs.length) { toast('Raporlanacak kayıt yok.', 'err'); return; }
+    const from = $('#fFrom').value ? fmtDate($('#fFrom').value) : 'Başlangıç';
+    const to = $('#fTo').value ? fmtDate($('#fTo').value) : 'Bugün';
+    await exportReportPDF(jobs, {
+      title: 'İŞ GEÇMİŞİ RAPORU',
+      subtitle: 'Filtrelenmiş işlem listesi',
+      dateLabel: `${from} — ${to}`,
+      file: 'beyaz-kuafor-is-gecmisi-raporu.pdf'
+    });
+  });
+
+  /* ==================================================================
+     PDF MOTORU (bağımlılıksız — canvas → JPEG → PDF)
+  ================================================================== */
+  const R = {
+    W: 1240, H: 1754, M: 64,
+    ink: '#14161a', ink2: '#4a5160', muted: '#8b93a1', line: '#e5e7ec',
+    gold: '#b1892b', gold2: '#d8b04a', goldDeep: '#8f6c1c',
+    goldSoft: '#fdf7e9', surface2: '#f7f8fa', danger: '#d92d20'
+  };
+  const FONT = (w, s) => `${w} ${s}px Inter, "Segoe UI", sans-serif`;
+  const SERIF = (w, s) => `${w} ${s}px "Playfair Display", Georgia, serif`;
+
+  function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+    else {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+  }
+
+  function fitText(ctx, text, maxW) {
+    const t = String(text ?? '');
+    if (ctx.measureText(t).width <= maxW) return t;
+    let s = t;
+    while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+    return s + '…';
+  }
+
+  function drawHeader(ctx, meta) {
+    const { W, M } = R;
+    ctx.fillStyle = R.gold2;
+    rrect(ctx, M, 50, 54, 54, 15); ctx.fill();
+    ctx.fillStyle = '#17181c';
+    ctx.font = SERIF(700, 27);
+    ctx.textAlign = 'center';
+    ctx.fillText('B', M + 27, 86);
+    ctx.textAlign = 'left';
+
+    ctx.fillStyle = R.ink;
+    ctx.font = SERIF(600, 26);
+    ctx.fillText('Beyaz Kuaför', M + 72, 76);
+    ctx.fillStyle = R.muted;
+    ctx.font = FONT(400, 14);
+    ctx.fillText(meta.subtitle, M + 72, 98);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = R.ink;
+    ctx.font = FONT(700, 21);
+    ctx.fillText(meta.title, W - M, 76);
+    ctx.fillStyle = R.muted;
+    ctx.font = FONT(400, 14);
+    ctx.fillText(meta.dateLabel, W - M, 98);
+    ctx.textAlign = 'left';
+
+    ctx.fillStyle = R.line; ctx.fillRect(M, 126, W - 2 * M, 1);
+    ctx.fillStyle = R.gold2; ctx.fillRect(M, 125, 130, 3);
+    return 158;
+  }
+
+  function drawFooter(ctx, meta, pageNo, pageCount) {
+    const { W, M, H } = R;
+    ctx.fillStyle = R.line; ctx.fillRect(M, H - 76, W - 2 * M, 1);
+    ctx.fillStyle = R.muted; ctx.font = FONT(400, 12);
+    ctx.fillText('Beyaz Kuaför · Yönetim Paneli', M, H - 48);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${meta.generatedAt}  ·  Sayfa ${pageNo}/${pageCount}`, W - M, H - 48);
+    ctx.textAlign = 'left';
+  }
+
+  function drawKpiRow(ctx, x, y, width, items) {
+    const gap = 16;
+    const w = (width - gap * (items.length - 1)) / items.length;
+    const h = 96;
+    items.forEach((it, i) => {
+      const bx = x + i * (w + gap);
+      ctx.fillStyle = it.gold ? R.goldSoft : R.surface2;
+      rrect(ctx, bx, y, w, h, 12); ctx.fill();
+      ctx.strokeStyle = it.gold ? '#efdfb6' : R.line;
+      ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = R.muted; ctx.font = FONT(700, 11);
+      ctx.fillText(String(it.label).toLocaleUpperCase('tr-TR'), bx + 18, y + 30);
+      ctx.fillStyle = it.gold ? R.goldDeep : R.ink;
+      ctx.font = FONT(700, 30);
+      ctx.fillText(fitText(ctx, it.value, w - 36), bx + 18, y + 70);
+    });
+    return y + h;
+  }
+
+  function drawBreakdown(ctx, x, y, w, title, rows, total) {
+    const headH = 44;
+    const rowH = 34;
+    const h = headH + (rows.length ? rows.length * rowH + 10 : 40);
+    ctx.fillStyle = '#fff';
+    rrect(ctx, x, y, w, h, 12); ctx.fill();
+    ctx.strokeStyle = R.line; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.save();
+    rrect(ctx, x, y, w, h, 12); ctx.clip();
+    ctx.fillStyle = R.surface2; ctx.fillRect(x, y, w, headH);
+    ctx.restore();
+
+    ctx.fillStyle = R.muted; ctx.font = FONT(700, 12);
+    ctx.fillText(title.toLocaleUpperCase('tr-TR'), x + 16, y + 27);
+
+    if (!rows.length) {
+      ctx.fillStyle = R.muted; ctx.font = FONT(400, 14);
+      ctx.fillText('Veri yok', x + 16, y + headH + 28);
+      return h;
+    }
+
+    const max = Math.max(...rows.map((r) => r.amount), 1);
+    rows.forEach((r, i) => {
+      const ry = y + headH + 8 + i * rowH;
+      ctx.fillStyle = R.ink; ctx.font = FONT(600, 14);
+      ctx.fillText(fitText(ctx, r.name, w * 0.45), x + 16, ry + 13);
+      ctx.fillStyle = R.muted; ctx.font = FONT(400, 12);
+      ctx.textAlign = 'right';
+      ctx.fillText(`${r.count} işlem · ${money(r.amount)}`, x + w - 16, ry + 13);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#eef0f4';
+      rrect(ctx, x + 16, ry + 21, w - 32, 5, 3); ctx.fill();
+      ctx.fillStyle = R.gold2;
+      rrect(ctx, x + 16, ry + 21, Math.max((w - 32) * (r.amount / max), 3), 5, 3); ctx.fill();
+    });
+    return h;
+  }
+
+  function drawTableHead(ctx, y, columns) {
+    const { W, M } = R;
+    ctx.fillStyle = R.surface2;
+    ctx.fillRect(M, y, W - 2 * M, 42);
+    let cx = M;
+    columns.forEach((col) => {
+      ctx.fillStyle = R.muted; ctx.font = FONT(700, 12);
+      ctx.textAlign = col.align === 'right' ? 'right' : 'left';
+      ctx.fillText(col.label.toLocaleUpperCase('tr-TR'), col.align === 'right' ? cx + col.w - 16 : cx + 16, y + 26);
+      cx += col.w;
+    });
+    ctx.textAlign = 'left';
+    return y + 42;
+  }
+
+  function renderReportPages(jobs, meta) {
+    const { W, H, M } = R;
+    const pages = [];
+    let ctx = null, y = 0;
+    const LIMIT = H - 110;
+
+    const newPage = () => {
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const cx = c.getContext('2d');
+      cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, W, H);
+      cx.textBaseline = 'alphabetic';
+      pages.push({ canvas: c, ctx: cx });
+      ctx = cx;
+      y = drawHeader(cx, meta);
+    };
+    newPage();
+
+    const d = reportData(jobs);
+    const topService = d.services[0] ? `${d.services[0].name} (${d.services[0].count})` : '—';
+
+    y = drawKpiRow(ctx, M, y, W - 2 * M, [
+      { label: 'Toplam Ciro', value: money(d.total), gold: true },
+      { label: 'İşlem Sayısı', value: String(d.count) },
+      { label: 'Ortalama Tut', value: money(d.avg) },
+      { label: 'En Çok Hizmet', value: topService }
+    ]) + 26;
+
+    const colW = (W - 2 * M - 20) / 2;
+    const rowsCount = Math.max(d.masters.length, d.services.length);
+    const blockH = 44 + (rowsCount ? rowsCount * 34 + 10 : 40);
+    if (y + blockH > LIMIT) newPage();
+    drawBreakdown(ctx, M, y, colW, 'Usta Bazlı Ciro', d.masters, d.total);
+    drawBreakdown(ctx, M + colW + 20, y, colW, 'Hizmet Bazlı Ciro', d.services, d.total);
+    y += blockH + 26;
+
+    const columns = [
+      { key: 'date', label: 'Tarih', w: 175 },
+      { key: 'time', label: 'Saat', w: 105 },
+      { key: 'master', label: 'Usta', w: 195 },
+      { key: 'services', label: 'Hizmetler', w: W - 2 * M - 175 - 105 - 195 - 165 },
+      { key: 'amount', label: 'Tutar', w: 165, align: 'right', strong: true }
+    ];
+
+    if (!jobs.length) {
+      ctx.fillStyle = R.muted; ctx.font = FONT(400, 16);
+      ctx.fillText('Bu tarihte kayıtlı işlem bulunmuyor.', M, y + 40);
+      y += 70;
+    } else {
+      y = drawTableHead(ctx, y, columns);
+      jobs.forEach((j, i) => {
+        if (y + 46 > LIMIT) { newPage(); y = drawTableHead(ctx, y, columns); }
+        if (i % 2 === 1) { ctx.fillStyle = '#fbfbfc'; ctx.fillRect(M, y, W - 2 * M, 46); }
+        const row = {
+          date: fmtDate(j.date), time: j.time || '—', master: j.master || '—',
+          services: servicesOf(j).join(' · '), amount: money(j.amount)
+        };
+        let cx = M;
+        columns.forEach((col) => {
+          ctx.fillStyle = col.strong ? R.ink : R.ink2;
+          ctx.font = col.strong ? FONT(700, 14) : FONT(400, 14);
+          ctx.textAlign = col.align === 'right' ? 'right' : 'left';
+          const tx = col.align === 'right' ? cx + col.w - 16 : cx + 16;
+          ctx.fillText(fitText(ctx, row[col.key], col.w - 24), tx, y + 29);
+          cx += col.w;
+        });
+        ctx.textAlign = 'left';
+        ctx.fillStyle = R.line; ctx.fillRect(M, y + 46, W - 2 * M, 1);
+        y += 46;
+      });
+
+      if (y + 64 > LIMIT) newPage();
+      ctx.fillStyle = R.goldSoft;
+      rrect(ctx, M, y + 10, W - 2 * M, 54, 10); ctx.fill();
+      ctx.strokeStyle = '#efdfb6'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = R.ink2; ctx.font = FONT(600, 15);
+      ctx.fillText(`TOPLAM  ·  ${jobs.length} işlem`, M + 20, y + 43);
+      ctx.fillStyle = R.goldDeep; ctx.font = SERIF(700, 26);
+      ctx.textAlign = 'right';
+      ctx.fillText(money(d.total), W - M - 20, y + 44);
+      ctx.textAlign = 'left';
+      y += 64;
+    }
+
+    pages.forEach((p, i) => drawFooter(p.ctx, meta, i + 1, pages.length));
+    return pages;
+  }
+
+  function canvasToJpegBytes(canvas) {
+    const url = canvas.toDataURL('image/jpeg', 0.92);
+    const b64 = url.slice(url.indexOf(',') + 1);
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function buildPdf(images) {
+    const enc = new TextEncoder();
+    const chunks = [];
+    const offsets = [];
+    let len = 0;
+    const pushStr = (s) => { const b = enc.encode(s); chunks.push(b); len += b.length; };
+    const pushBytes = (b) => { chunks.push(b); len += b.length; };
+    const startObj = () => { offsets.push(len); };
+
+    pushStr('%PDF-1.4\n');
+    pushBytes(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
+
+    startObj();
+    pushStr('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+
+    const n = images.length;
+    const kids = images.map((_, i) => `${3 + i * 3} 0 R`).join(' ');
+    startObj();
+    pushStr(`2 0 obj\n<< /Type /Pages /Kids [${kids}] /Count ${n} >>\nendobj\n`);
+
+    for (let i = 0; i < n; i++) {
+      const p = 3 + i * 3, c = p + 1, im = p + 2;
+
+      startObj();
+      pushStr(`${p} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${im} 0 R >> >> /Contents ${c} 0 R >>\nendobj\n`);
+
+      const content = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+      startObj();
+      pushStr(`${c} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
+
+      startObj();
+      pushStr(`${im} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${images[i].w} /Height ${images[i].h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${images[i].data.length} >>\nstream\n`);
+      pushBytes(images[i].data);
+      pushStr('\nendstream\nendobj\n');
+    }
+
+    const xrefPos = len;
+    let xref = `xref\n0 ${offsets.length + 1}\n0000000000 65535 f \n`;
+    offsets.forEach((off) => { xref += `${String(off).padStart(10, '0')} 00000 n \n`; });
+    xref += `trailer\n<< /Size ${offsets.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+    pushStr(xref);
+
+    const out = new Uint8Array(len);
+    let o = 0;
+    for (const ch of chunks) { out.set(ch, o); o += ch.length; }
+    return out;
+  }
+
+  async function exportReportPDF(jobs, meta) {
+    const btn = $('#dayEndPdf');
+    const label = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span>Rapor hazırlanıyor…</span>'; }
+    try {
+      if (document.fonts && document.fonts.load) {
+        await Promise.all([
+          document.fonts.load('400 14px Inter'),
+          document.fonts.load('700 14px Inter'),
+          document.fonts.load('600 26px "Playfair Display"'),
+          document.fonts.load('700 26px "Playfair Display"')
+        ]).catch(() => {});
+      }
+      const fullMeta = {
+        ...meta,
+        generatedAt: `Rapor: ${new Date().toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}`
+      };
+      const pages = renderReportPages(jobs, fullMeta);
+      const images = pages.map((p) => ({ data: canvasToJpegBytes(p.canvas), w: p.canvas.width, h: p.canvas.height }));
+      const pdf = buildPdf(images);
+      downloadBlob(pdf, meta.file, 'application/pdf');
+      toast('PDF rapor indirildi');
+    } catch (err) {
+      console.error(err);
+      toast('PDF oluşturulamadı.', 'err');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = label; }
+    }
+  }
+
+  /* ==================================================================
+     Saat / Klavye
+  ================================================================== */
+  function tickClock() {
+    const now = new Date();
+    $('#admClock').textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    $('#admDate').textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeAllModals(); return; }
+    if (e.key === 'F2') { e.preventDefault(); switchView('pos'); }
+    if (e.key === 'F4' && e.shiftKey) { e.preventDefault(); switchView('history'); }
+  });
+
+  /* ==================================================================
+     Başlat
+  ================================================================== */
+  renderStats();
   renderServices();
   renderMasters();
   renderExtras();
   renderSummary();
-}
+  renderDoneList();
+  renderDayStatus();
+  tickClock();
+  setInterval(tickClock, 15000);
 
-// ---------- Amount buttons ----------
-document.querySelectorAll('.adm-amtbtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const d = parseInt(btn.dataset.delta);
-    state.manualDelta += d;
-    renderSummary();
-  });
-});
-
-// ---------- Complete ----------
-document.getElementById('completeBtn').addEventListener('click', () => {
-  const msg = document.getElementById('completeMsg');
-  msg.textContent = '';
-  if (!state.selected.length) { msg.style.color = '#ff6b6b'; msg.textContent = 'Hizmet seçin.'; return; }
-  if (!state.master) { msg.style.color = '#ff6b6b'; msg.textContent = 'Usta seçin.'; return; }
-  const job = {
-    id: 'J' + Date.now(),
-    date: todayISO(),
-    time: nowTime(),
-    master: state.master,
-    services: [...state.selected],
-    service: state.selected.join(' + '),
-    amount: totalAmount(),
-    createdAt: new Date().toISOString()
-  };
-  const jobs = getJobs();
-  jobs.push(job);
-  saveJobs(jobs);
-  // reset
-  state.selected = [];
-  state.master = null;
-  state.manualDelta = 0;
-  renderAll();
-  renderStats();
-  msg.style.color = '#7ddf8a';
-  msg.textContent = 'Kaydedildi ✓';
-  setTimeout(() => msg.textContent = '', 1500);
-});
-
-// ---------- Modals helpers ----------
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// History
-document.getElementById('histBtn').addEventListener('click', () => { renderJobs(); openModal('histModal'); });
-document.getElementById('histClose').addEventListener('click', () => closeModal('histModal'));
-
-function renderJobs() {
-  const tbody = document.getElementById('jobBody');
-  tbody.innerHTML = '';
-  let jobs = getJobs();
-  const from = document.getElementById('fFrom').value;
-  const to = document.getElementById('fTo').value;
-  const search = document.getElementById('fSearch').value.trim();
-  if (from) jobs = jobs.filter(j => j.date >= from);
-  if (to) jobs = jobs.filter(j => j.date <= to);
-  if (search) {
-    const q = search.toLowerCase();
-    jobs = jobs.filter(j => ((j.services||[j.service]).join(' ') + ' ' + (j.master||'')).toLowerCase().includes(q));
-  }
-  jobs.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
-  const empty = document.getElementById('jobEmpty');
-  if (!jobs.length) { empty.style.display = 'block'; return; } else empty.style.display = 'none';
-  jobs.forEach(j => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${fmtDate(j.date)}</td>
-      <td>${j.time}</td>
-      <td>${escapeHtml(j.master||'—')}</td>
-      <td>${escapeHtml((j.services||[j.service]).join(', '))}</td>
-      <td><strong>${j.amount} ₺</strong></td>
-      <td><button class="adm-del" data-id="${j.id}">🗑</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-  tbody.querySelectorAll('.adm-del').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
-      saveJobs(getJobs().filter(j => j.id !== btn.dataset.id));
-      renderJobs();
-      renderStats();
-    });
-  });
-}
-document.getElementById('applyFilter').addEventListener('click', renderJobs);
-document.getElementById('clearFilter').addEventListener('click', () => {
-  document.getElementById('fFrom').value = '';
-  document.getElementById('fTo').value = '';
-  document.getElementById('fSearch').value = '';
-  renderJobs();
-});
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const jobs = getJobs();
-  if (!jobs.length) { alert('Dışa aktarılacak kayıt yok.'); return; }
-  const header = ['Tarih','Saat','Usta','Hizmetler','Ücret'];
-  const rows = jobs.map(j => [j.date, j.time, j.master||'', (j.services||[j.service]).join(' + '), j.amount]);
-  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'beyaz-kuafor-is-gecmisi.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-// Settings
-document.getElementById('settBtn').addEventListener('click', () => { renderSettings(); openModal('settModal'); });
-document.getElementById('settClose').addEventListener('click', () => closeModal('settModal'));
-
-function renderSettings() {
-  // services
-  const svcContainer = document.getElementById('svcList');
-  svcContainer.innerHTML = '';
-  getSvcs().forEach((s, idx) => {
-    const row = document.createElement('div');
-    row.className = 'adm-svcrow';
-    row.innerHTML = `<span>${escapeHtml(s.name)}</span><input type="number" value="${s.price}" data-idx="${idx}" min="0" /><button data-del="${idx}">🗑</button>`;
-    svcContainer.appendChild(row);
-  });
-  svcContainer.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('change', () => {
-      const svcs = getSvcs();
-      svcs[inp.dataset.idx].price = parseFloat(inp.value) || 0;
-      saveSvcs(svcs);
-      renderServices();
-    });
-  });
-  svcContainer.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const svcs = getSvcs();
-      svcs.splice(btn.dataset.del, 1);
-      saveSvcs(svcs);
-      renderSettings();
-      renderServices();
-    });
-  });
-  // masters
-  const mContainer = document.getElementById('masterList');
-  mContainer.innerHTML = '';
-  getMasters().forEach((m, idx) => {
-    const row = document.createElement('div');
-    row.className = 'adm-svcrow';
-    row.innerHTML = `<span>${escapeHtml(m)}</span><button data-del="${idx}">🗑</button>`;
-    mContainer.appendChild(row);
-  });
-  mContainer.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const ms = getMasters();
-      ms.splice(btn.dataset.del, 1);
-      saveMasters(ms);
-      renderSettings();
-      renderMasters();
-    });
-  });
-}
-
-document.getElementById('addSvcBtn').addEventListener('click', () => {
-  const name = document.getElementById('newSvcName').value.trim();
-  const price = parseFloat(document.getElementById('newSvcPrice').value);
-  if (!name) { alert('Hizmet adı girin.'); return; }
-  if (isNaN(price)) { alert('Fiyat girin.'); return; }
-  const svcs = getSvcs();
-  svcs.push({ name, price });
-  saveSvcs(svcs);
-  document.getElementById('newSvcName').value = '';
-  document.getElementById('newSvcPrice').value = '';
-  renderSettings();
-  renderServices();
-});
-document.getElementById('addMasterBtn').addEventListener('click', () => {
-  const name = document.getElementById('newMasterName').value.trim();
-  if (!name) { alert('Usta adı girin.'); return; }
-  const ms = getMasters();
-  ms.push(name);
-  saveMasters(ms);
-  document.getElementById('newMasterName').value = '';
-  renderSettings();
-  renderMasters();
-});
-
-// Quick add service modal
-document.getElementById('addSvcQuick').addEventListener('click', () => openModal('addSvcModal'));
-document.getElementById('addSvcClose').addEventListener('click', () => closeModal('addSvcModal'));
-document.getElementById('qsSave').addEventListener('click', () => {
-  const name = document.getElementById('qsName').value.trim();
-  const price = parseFloat(document.getElementById('qsPrice').value);
-  if (!name || isNaN(price)) { alert('Bilgileri girin.'); return; }
-  const svcs = getSvcs();
-  svcs.push({ name, price });
-  saveSvcs(svcs);
-  document.getElementById('qsName').value = '';
-  document.getElementById('qsPrice').value = '';
-  closeModal('addSvcModal');
-  renderServices();
-});
-
-// Quick add master modal
-document.getElementById('addMasterQuick').addEventListener('click', () => openModal('addMasterModal'));
-document.getElementById('addMasterClose').addEventListener('click', () => closeModal('addMasterModal'));
-document.getElementById('qmSave').addEventListener('click', () => {
-  const name = document.getElementById('qmName').value.trim();
-  if (!name) { alert('Ad girin.'); return; }
-  const ms = getMasters();
-  ms.push(name);
-  saveMasters(ms);
-  document.getElementById('qmName').value = '';
-  closeModal('addMasterModal');
-  renderMasters();
-});
-
-// Extra picker
-document.getElementById('extraPickBtn').addEventListener('click', () => {
-  const list = document.getElementById('extraPickList');
-  list.innerHTML = '';
-  getSvcs().forEach(s => {
-    const box = document.createElement('div');
-    box.className = 'adm-svcbox';
-    box.innerHTML = `<div class="name">${escapeHtml(s.name)}</div><div class="price"><strong>${s.price} ₺</strong></div>`;
-    box.addEventListener('click', () => {
-      state.selected.push(s.name);
-      closeModal('extraModal');
-      renderAll();
-    });
-    list.appendChild(box);
-  });
-  openModal('extraModal');
-});
-document.getElementById('extraClose').addEventListener('click', () => closeModal('extraModal'));
-
-// Close modals on backdrop click
-document.querySelectorAll('.adm-modal').forEach(m => {
-  m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('open'); });
-});
-
-// Init
-renderStats();
-renderAll();
+  const initialView = location.hash.replace('#', '');
+  if (VIEW_META[initialView]) switchView(initialView, true);
+})();

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yönetim Paneli — Beyaz Kuaför</title>
   <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#1b1d22" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -12,177 +13,514 @@
   <link rel="stylesheet" href="admin.css" />
 </head>
 <body class="adm-body">
-  <!-- Top bar -->
-  <header class="adm-top">
-    <div class="adm-brand">
-      <span class="logo__mark" style="width:32px;height:32px;font-size:16px;">B</span>
-      <span>Beyaz Kuaför — Yönetim</span>
+
+<!-- SVG ikon kütüphanesi -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3v18l2.5-1.6L10 21l2-1.6L14 21l2.5-1.6L19 21V3z"/><path d="M9 8.5h6M9 12.5h4"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3.2 2"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h8M16.5 7H20M4 17h3.5M12 17h8M4 12h5M13.5 12H20"/><circle cx="14.2" cy="7" r="2.2"/><circle cx="9.8" cy="17" r="2.2"/><circle cx="11.2" cy="12" r="2.2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l1 12.2h9L17.5 7"/><path d="M10.5 10.5v6M13.5 10.5v6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v10.5M8 10.5l4 4 4-4M4.5 19.5h15"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-3.6-3.6"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-cal-month" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17.5h2"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.5l8.5 4.2-8.5 4.2L3.5 7.7z"/><path d="M4 12.2l8 4 8-4M4 16.4l8 4 8-4"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.6.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.6-.8z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17 14.8c2.2.5 3.5 2.2 3.5 4.7"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 1.9"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.5 8.5 0 1 0 20 14.2z"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V3.5M5.5 4.5h11l-2 3.6 2 3.6h-11"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<div class="adm-shell">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="adm-side">
+    <div class="adm-side__brand">
+      <span class="adm-mark">B</span>
+      <span class="adm-side__brandtext">
+        <strong>Beyaz Kuaför</strong>
+        <em>Yönetim Paneli</em>
+      </span>
     </div>
-    <div class="adm-topstats">
-      <div class="adm-ts"><span>Bugün</span><strong id="stToday">0</strong><em id="stTodayAmt">0₺</em></div>
-      <div class="adm-ts"><span>Bu Ay</span><strong id="stMonth">0</strong><em id="stMonthAmt">0₺</em></div>
-      <div class="adm-ts"><span>Toplam</span><strong id="stAll">0</strong><em id="stAllAmt">0₺</em></div>
-      <div class="adm-ts"><span>En Çok</span><strong id="stTop" style="font-size:14px;">—</strong></div>
+
+    <nav class="adm-nav" aria-label="Ana menü">
+      <p class="adm-nav__label">Menü</p>
+      <button type="button" class="adm-navitem is-active" data-view="pos">
+        <svg class="adm-navitem__icon"><use href="#i-receipt"/></svg>
+        <span>Yeni İşlem</span>
+      </button>
+      <button type="button" class="adm-navitem" data-view="history">
+        <svg class="adm-navitem__icon"><use href="#i-history"/></svg>
+        <span>İş Geçmişi</span>
+        <span class="adm-navitem__badge" id="navJobCount">0</span>
+      </button>
+      <button type="button" class="adm-navitem" data-view="settings">
+        <svg class="adm-navitem__icon"><use href="#i-sliders"/></svg>
+        <span>Ayarlar</span>
+      </button>
+    </nav>
+
+    <div class="adm-side__foot">
+      <div class="adm-side__stat">
+        <span>Bugünkü işlem</span>
+        <strong id="sideToday">0</strong>
+      </div>
+      <a class="adm-side__link" href="index.html">
+        <svg class="adm-navitem__icon"><use href="#i-external"/></svg> Siteyi Aç
+      </a>
+      <a class="adm-side__link" href="randevu.html">
+        <svg class="adm-navitem__icon"><use href="#i-cal"/></svg> Randevu Sayfası
+      </a>
+      <p class="adm-side__ver">Beyaz Kuaför · Yönetim Paneli v2.0</p>
     </div>
-    <div class="adm-topactions">
-      <button class="adm-tbtn" id="histBtn">📋 Geçmiş</button>
-      <button class="adm-tbtn" id="settBtn">⚙️ Ayarlar</button>
-      <a class="adm-tbtn" href="index.html">🌐 Site</a>
-    </div>
-  </header>
+  </aside>
 
-  <!-- Main (no scroll) -->
-  <main class="adm-main">
-    <!-- Services -->
-    <section class="adm-panel adm-services">
-      <div class="adm-panelhead">
-        <h3>Hizmetler</h3>
-        <button class="adm-mini" id="addSvcQuick">+ Ekle</button>
+  <!-- ================= MAIN ================= -->
+  <div class="adm-main">
+    <header class="adm-pagebar">
+      <div class="adm-pagebar__title">
+        <h1 id="admPageTitle">Yeni İşlem</h1>
+        <p id="admPageSub">Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.</p>
       </div>
-      <div id="svcBoxes" class="adm-svcgrid"></div>
-    </section>
-
-    <!-- Masters -->
-    <section class="adm-panel adm-masters">
-      <div class="adm-panelhead">
-        <h3>Usta</h3>
-        <button class="adm-mini" id="addMasterQuick">+ Ekle</button>
-      </div>
-      <div id="masterBoxes" class="adm-mastergrid"></div>
-    </section>
-
-    <!-- Amount -->
-    <section class="adm-panel adm-amount">
-      <h3>Ücret</h3>
-      <div class="adm-amountdisplay" id="amountDisplay">0 ₺</div>
-      <div class="adm-amtrow">
-        <button class="adm-amtbtn" data-delta="-10">−10</button>
-        <button class="adm-amtbtn" data-delta="+10">+10</button>
-        <button class="adm-amtbtn" data-delta="-50">−50</button>
-        <button class="adm-amtbtn" data-delta="+50">+50</button>
-      </div>
-      <div id="amtPresets" class="adm-presets"></div>
-    </section>
-
-    <!-- Extra services -->
-    <section class="adm-panel adm-extra">
-      <div class="adm-panelhead">
-        <h3>Ekstra Hizmet</h3>
-      </div>
-      <div id="extraChips" class="adm-chips"></div>
-      <button class="adm-mini adm-extrabtn" id="extraPickBtn">+ Ekstra Ekle</button>
-    </section>
-
-    <!-- Summary -->
-    <section class="adm-panel adm-summary">
-      <h3>Özet</h3>
-      <div id="summaryList" class="adm-summarylist"></div>
-      <div class="adm-total">Toplam <strong id="totalAmt">0 ₺</strong></div>
-      <button class="adm-complete" id="completeBtn">İşlemi Tamamla ✓</button>
-      <p class="adm-msg" id="completeMsg"></p>
-    </section>
-  </main>
-
-  <!-- Modal: History -->
-  <div class="adm-modal" id="histModal">
-    <div class="adm-modalbox">
-      <div class="adm-modalhead">
-        <h3>İş Geçmişi</h3>
-        <div class="adm-modalactions">
-          <button class="adm-mini" id="exportBtn">CSV İndir</button>
-          <button class="adm-mini" id="histClose">✕</button>
+      <div class="adm-pagebar__actions">
+        <div class="adm-clock">
+          <svg class="adm-navitem__icon"><use href="#i-clock"/></svg>
+          <span id="admClock">--:--</span>
+          <em id="admDate">—</em>
         </div>
       </div>
-      <div class="adm-modalbody">
-        <div class="adm-filterrow">
-          <input type="date" id="fFrom" />
-          <input type="date" id="fTo" />
-          <input type="text" id="fSearch" placeholder="Ara" />
-          <button class="adm-mini" id="applyFilter">Filtrele</button>
-          <button class="adm-mini" id="clearFilter">Temizle</button>
-        </div>
-        <div class="adm-tablewrap">
-          <table class="adm-table">
-            <thead><tr><th>Tarih</th><th>Saat</th><th>Usta</th><th>Hizmetler</th><th>Ücret</th><th></th></tr></thead>
-            <tbody id="jobBody"></tbody>
-          </table>
-        </div>
-        <p class="rv-empty" id="jobEmpty" style="display:none;">Kayıt bulunamadı.</p>
-      </div>
-    </div>
-  </div>
+    </header>
 
-  <!-- Modal: Settings -->
-  <div class="adm-modal" id="settModal">
-    <div class="adm-modalbox">
-      <div class="adm-modalhead">
-        <h3>Ayarlar</h3>
-        <button class="adm-mini" id="settClose">✕</button>
-      </div>
-      <div class="adm-modalbody adm-settings">
-        <div>
-          <h4>Hizmetler</h4>
-          <div id="svcList" class="adm-svclist"></div>
-          <div class="adm-addsvc">
-            <input type="text" id="newSvcName" placeholder="Hizmet adı" />
-            <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
-            <button class="adm-mini" id="addSvcBtn">Ekle</button>
+    <div class="adm-content">
+
+      <!-- ---------- YENİ İŞLEM ---------- -->
+      <section class="adm-view is-active" data-view="pos">
+
+        <!-- KPI şeridi -->
+        <div class="adm-kpis">
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--a"><svg><use href="#i-cal"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Bugün</span>
+              <strong class="adm-kpi__value" id="kpiTodayCount">0</strong>
+              <span class="adm-kpi__meta" id="kpiTodayAmount">0 ₺</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--b"><svg><use href="#i-cal-month"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Bu Ay</span>
+              <strong class="adm-kpi__value" id="kpiMonthCount">0</strong>
+              <span class="adm-kpi__meta" id="kpiMonthAmount">0 ₺</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--c"><svg><use href="#i-layers"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Toplam İşlem</span>
+              <strong class="adm-kpi__value" id="kpiAllCount">0</strong>
+              <span class="adm-kpi__meta" id="kpiAllAmount">0 ₺</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--d"><svg><use href="#i-star"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">En Çok Tercih</span>
+              <strong class="adm-kpi__value adm-kpi__value--sm" id="kpiTopName">—</strong>
+              <span class="adm-kpi__meta" id="kpiTopCount">0 kez</span>
+            </div>
           </div>
         </div>
-        <div>
-          <h4>Ustalar</h4>
-          <div id="masterList" class="adm-svclist"></div>
-          <div class="adm-addsvc">
-            <input type="text" id="newMasterName" placeholder="Usta adı" />
-            <button class="adm-mini" id="addMasterBtn">Ekle</button>
+
+        <div class="adm-pos">
+
+          <!-- SOL: Hizmetler -->
+          <div class="adm-pos__col">
+            <section class="adm-card adm-card--grow">
+              <header class="adm-card__head">
+                <div>
+                  <h2>Hizmetler</h2>
+                  <span class="adm-card__sub">Birden fazla hizmet seçebilirsiniz</span>
+                </div>
+                <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm" id="addSvcQuick">
+                  <svg><use href="#i-plus"/></svg> Ekle
+                </button>
+              </header>
+              <div class="adm-card__body adm-card__body--flush">
+                <div id="svcBoxes" class="adm-svcgrid"></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ORTA: Usta / Ekstra / Ücret -->
+          <div class="adm-pos__col">
+            <section class="adm-card">
+              <header class="adm-card__head">
+                <div>
+                  <h2>Usta</h2>
+                  <span class="adm-card__sub">Hizmeti verecek usta</span>
+                </div>
+                <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm" id="addMasterQuick">
+                  <svg><use href="#i-plus"/></svg> Ekle
+                </button>
+              </header>
+              <div class="adm-card__body">
+                <div id="masterBoxes" class="adm-mastergrid"></div>
+              </div>
+            </section>
+
+            <section class="adm-card">
+              <header class="adm-card__head">
+                <div>
+                  <h2>Ekstra Hizmet</h2>
+                  <span class="adm-card__sub">Ek pakete eklenenler</span>
+                </div>
+              </header>
+              <div class="adm-card__body adm-card__body--col">
+                <div id="extraChips" class="adm-chips"></div>
+                <button type="button" class="adm-btn adm-btn--outline adm-btn--block" id="extraPickBtn">
+                  <svg><use href="#i-plus"/></svg> Ekstra Ekle
+                </button>
+              </div>
+            </section>
+
+            <section class="adm-card">
+              <header class="adm-card__head">
+                <div>
+                  <h2>Ücret</h2>
+                  <span class="adm-card__sub">Hızlı düzeltme</span>
+                </div>
+              </header>
+              <div class="adm-card__body adm-card__body--col">
+                <div class="adm-amount">
+                  <span class="adm-amount__label">Güncel Tutar</span>
+                  <strong class="adm-amount__value" id="amountDisplay">0 ₺</strong>
+                  <span class="adm-amount__delta" id="amountDelta"></span>
+                </div>
+                <div class="adm-amountsteps">
+                  <button type="button" class="adm-stepbtn adm-stepbtn--minus" data-delta="-50">−50</button>
+                  <button type="button" class="adm-stepbtn adm-stepbtn--minus" data-delta="-10">−10</button>
+                  <button type="button" class="adm-stepbtn adm-stepbtn--plus" data-delta="10">+10</button>
+                  <button type="button" class="adm-stepbtn adm-stepbtn--plus" data-delta="50">+50</button>
+                </div>
+                <div>
+                  <p class="adm-label">Hazır Tutar</p>
+                  <div id="amtPresets" class="adm-presets"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- SAĞ: Özet + Tamamlanan İşlemler -->
+          <div class="adm-pos__col">
+            <section class="adm-card">
+              <header class="adm-card__head">
+                <div>
+                  <h2>Özet</h2>
+                  <span class="adm-card__sub">İşlem detayları</span>
+                </div>
+              </header>
+              <div class="adm-card__body adm-card__body--col">
+                <div id="summaryList" class="adm-summarylist"></div>
+                <div class="adm-total">
+                  <span>Toplam</span>
+                  <strong id="totalAmt">0 ₺</strong>
+                </div>
+                <button type="button" class="adm-btn adm-btn--primary adm-btn--lg adm-btn--block" id="completeBtn">
+                  <svg><use href="#i-check"/></svg> İşlemi Tamamla
+                </button>
+                <p class="adm-daystatus" id="dayStatus"></p>
+              </div>
+            </section>
+
+            <section class="adm-card adm-card--fill">
+              <header class="adm-card__head">
+                <div class="adm-card__headinline">
+                  <h2>Tamamlanan İşlemler</h2>
+                  <span class="adm-card__count" id="doneCount">0</span>
+                </div>
+                <button type="button" class="adm-btn adm-btn--dark adm-btn--sm" id="dayEndBtn">
+                  <svg><use href="#i-flag"/></svg> Gün Sonu
+                </button>
+              </header>
+              <div class="adm-card__body adm-card__body--flush adm-donelist" id="doneList"></div>
+              <footer class="adm-card__foot">
+                <span>Bugünkü Ciro</span>
+                <strong id="doneTotal">0 ₺</strong>
+              </footer>
+            </section>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ---------- GEÇMİŞ ---------- -->
+      <section class="adm-view" data-view="history">
+        <div class="adm-kpis adm-kpis--3">
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--c"><svg><use href="#i-layers"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Kayıt Sayısı</span>
+              <strong class="adm-kpi__value" id="histCount">0</strong>
+              <span class="adm-kpi__meta" id="histAvg">Ort. 0 ₺</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--b"><svg><use href="#i-cal-month"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Toplam Ciro</span>
+              <strong class="adm-kpi__value" id="histTotal">0 ₺</strong>
+              <span class="adm-kpi__meta">Seçili filtreye göre</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--a"><svg><use href="#i-cal"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Son İşlem</span>
+              <strong class="adm-kpi__value adm-kpi__value--sm" id="histLast">—</strong>
+              <span class="adm-kpi__meta" id="histLastMeta">—</span>
+            </div>
           </div>
         </div>
-      </div>
+
+        <section class="adm-card">
+          <header class="adm-card__head adm-card__head--wrap">
+            <div>
+              <h2>Kayıtlar</h2>
+              <span class="adm-card__sub">Tarih, usta veya hizmete göre filtreleyin</span>
+            </div>
+            <div class="adm-toolbar">
+              <div class="adm-quickfilters">
+                <button type="button" class="adm-chipbtn is-active" data-quick="all">Tümü</button>
+                <button type="button" class="adm-chipbtn" data-quick="today">Bugün</button>
+                <button type="button" class="adm-chipbtn" data-quick="week">Bu Hafta</button>
+                <button type="button" class="adm-chipbtn" data-quick="month">Bu Ay</button>
+              </div>
+              <button type="button" class="adm-btn adm-btn--outline adm-btn--sm" id="exportPdfBtn">
+                <svg><use href="#i-download"/></svg> PDF Rapor
+              </button>
+              <button type="button" class="adm-btn adm-btn--outline adm-btn--sm" id="exportBtn">
+                <svg><use href="#i-download"/></svg> CSV
+              </button>
+            </div>
+          </header>
+          <div class="adm-card__body adm-card__body--flush">
+            <div class="adm-filters">
+              <label class="adm-input adm-input--icon">
+                <svg><use href="#i-cal"/></svg>
+                <input type="date" id="fFrom" aria-label="Başlangıç tarihi" />
+              </label>
+              <label class="adm-input adm-input--icon">
+                <svg><use href="#i-cal"/></svg>
+                <input type="date" id="fTo" aria-label="Bitiş tarihi" />
+              </label>
+              <label class="adm-input adm-input--icon adm-input--grow">
+                <svg><use href="#i-search"/></svg>
+                <input type="text" id="fSearch" placeholder="Usta veya hizmet ara…" />
+              </label>
+              <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="applyFilter">Filtrele</button>
+              <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm" id="clearFilter">Temizle</button>
+            </div>
+
+            <div class="adm-tablewrap">
+              <table class="adm-table">
+                <thead>
+                  <tr>
+                    <th>Tarih</th>
+                    <th>Saat</th>
+                    <th>Usta</th>
+                    <th>Hizmetler</th>
+                    <th class="ta-right">Ücret</th>
+                    <th class="ta-center">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="jobBody"></tbody>
+              </table>
+            </div>
+            <div class="adm-empty" id="jobEmpty">
+              <svg><use href="#i-search"/></svg>
+              <p>Kayıt bulunamadı</p>
+              <span>Filtreleri değiştirerek tekrar deneyin.</span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ---------- AYARLAR ---------- -->
+      <section class="adm-view" data-view="settings">
+        <div class="adm-grid adm-grid--2">
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Hizmetler</h2>
+                <span class="adm-card__sub">Fiyatları güncelleyin, yeni hizmet ekleyin</span>
+              </div>
+              <span class="adm-card__count" id="svcCount">0</span>
+            </header>
+            <div class="adm-card__body">
+              <div id="svcList" class="adm-svclist"></div>
+              <div class="adm-addrow">
+                <input type="text" id="newSvcName" placeholder="Hizmet adı" />
+                <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
+                <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="addSvcBtn">
+                  <svg><use href="#i-plus"/></svg> Ekle
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Ustalar</h2>
+                <span class="adm-card__sub">Hizmet verecek usta listesi</span>
+              </div>
+              <span class="adm-card__count" id="masterCount">0</span>
+            </header>
+            <div class="adm-card__body">
+              <div id="masterList" class="adm-svclist"></div>
+              <div class="adm-addrow adm-addrow--single">
+                <input type="text" id="newMasterName" placeholder="Usta adı" />
+                <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="addMasterBtn">
+                  <svg><use href="#i-plus"/></svg> Ekle
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="adm-card adm-dangerzone">
+          <header class="adm-card__head">
+            <div>
+              <h2>Veriler</h2>
+              <span class="adm-card__sub">Tüm kayıtlar tarayıcıda saklanır</span>
+            </div>
+          </header>
+          <div class="adm-card__body adm-card__body--row">
+            <p>Tüm işlem geçmişini kalıcı olarak silmek istiyor musunuz? Bu işlem geri alınamaz.</p>
+            <button type="button" class="adm-btn adm-btn--danger" id="clearJobsBtn">Tüm Geçmişi Sil</button>
+          </div>
+        </section>
+      </section>
+
     </div>
   </div>
+</div>
 
-  <!-- Modal: Extra picker -->
-  <div class="adm-modal" id="extraModal">
-    <div class="adm-modalbox adm-modalbox--sm">
-      <div class="adm-modalhead">
+<!-- ================= MODALS ================= -->
+
+<!-- Gün Sonu Raporu -->
+<div class="adm-modal" id="dayEndModal" role="dialog" aria-modal="true">
+  <div class="adm-modalbox adm-modalbox--lg">
+    <header class="adm-modalhead">
+      <div>
+        <h3>Gün Sonu Raporu</h3>
+        <span>Seçili günün ciro ve işlem dökümü</span>
+      </div>
+      <button type="button" class="adm-iconbtn" data-close="dayEndModal" aria-label="Kapat"><svg><use href="#i-x"/></svg></button>
+    </header>
+    <div class="adm-modalbody adm-modalbody--flush">
+      <div class="adm-filters adm-filters--bar">
+        <label class="adm-input adm-input--icon">
+          <svg><use href="#i-cal"/></svg>
+          <input type="date" id="dayEndDate" aria-label="Rapor tarihi" />
+        </label>
+        <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="dayEndRefresh">Güncelle</button>
+        <span class="adm-spacer"></span>
+        <button type="button" class="adm-btn adm-btn--outline adm-btn--sm" id="dayEndCsv">
+          <svg><use href="#i-download"/></svg> CSV
+        </button>
+        <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="dayEndPdf">
+          <svg><use href="#i-download"/></svg> PDF Rapor İndir
+        </button>
+      </div>
+      <div id="dayEndBody" class="adm-report"></div>
+    </div>
+    <footer class="adm-modalfoot adm-modalfoot--split">
+      <button type="button" class="adm-btn adm-btn--ghost" id="dayEndToggle">
+        <svg><use href="#i-flag"/></svg> <span>Günü Kapat</span>
+      </button>
+      <button type="button" class="adm-btn adm-btn--dark" data-close="dayEndModal">Kapat</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Ekstra hizmet seçimi -->
+<div class="adm-modal" id="extraModal" role="dialog" aria-modal="true">
+  <div class="adm-modalbox adm-modalbox--sm">
+    <header class="adm-modalhead">
+      <div>
         <h3>Ekstra Hizmet Seç</h3>
-        <button class="adm-mini" id="extraClose">✕</button>
+        <span>Eklenen hizmet tutara dahil edilir</span>
       </div>
-      <div class="adm-modalbody">
-        <div id="extraPickList" class="adm-svcgrid"></div>
-      </div>
+      <button type="button" class="adm-iconbtn" data-close="extraModal" aria-label="Kapat"><svg><use href="#i-x"/></svg></button>
+    </header>
+    <div class="adm-modalbody">
+      <div id="extraPickList" class="adm-svcgrid adm-svcgrid--pick"></div>
     </div>
   </div>
+</div>
 
-  <!-- Modal: Add service quick -->
-  <div class="adm-modal" id="addSvcModal">
-    <div class="adm-modalbox adm-modalbox--sm">
-      <div class="adm-modalhead">
+<!-- Hızlı hizmet ekleme -->
+<div class="adm-modal" id="addSvcModal" role="dialog" aria-modal="true">
+  <div class="adm-modalbox adm-modalbox--sm">
+    <header class="adm-modalhead">
+      <div>
         <h3>Yeni Hizmet</h3>
-        <button class="adm-mini" id="addSvcClose">✕</button>
+        <span>Hizmet listesine ekleyin</span>
       </div>
-      <div class="adm-modalbody">
-        <div class="rv-field"><label>Ad</label><input type="text" id="qsName" /></div>
-        <div class="rv-field"><label>Fiyat</label><input type="number" id="qsPrice" min="0" /></div>
-        <button class="adm-complete" id="qsSave" style="margin-top:12px;">Kaydet</button>
+      <button type="button" class="adm-iconbtn" data-close="addSvcModal" aria-label="Kapat"><svg><use href="#i-x"/></svg></button>
+    </header>
+    <div class="adm-modalbody">
+      <div class="adm-field">
+        <label for="qsName">Hizmet Adı</label>
+        <input type="text" id="qsName" placeholder="Örn. Çocuk Saç Kesimi" />
+      </div>
+      <div class="adm-field">
+        <label for="qsPrice">Fiyat (₺)</label>
+        <input type="number" id="qsPrice" min="0" placeholder="0" />
+      </div>
+      <div class="adm-modalfoot">
+        <button type="button" class="adm-btn adm-btn--ghost" data-close="addSvcModal">Vazgeç</button>
+        <button type="button" class="adm-btn adm-btn--primary" id="qsSave">Kaydet</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Modal: Add master quick -->
-  <div class="adm-modal" id="addMasterModal">
-    <div class="adm-modalbox adm-modalbox--sm">
-      <div class="adm-modalhead">
+<!-- Hızlı usta ekleme -->
+<div class="adm-modal" id="addMasterModal" role="dialog" aria-modal="true">
+  <div class="adm-modalbox adm-modalbox--sm">
+    <header class="adm-modalhead">
+      <div>
         <h3>Yeni Usta</h3>
-        <button class="adm-mini" id="addMasterClose">✕</button>
+        <span>Usta listesine ekleyin</span>
       </div>
-      <div class="adm-modalbody">
-        <div class="rv-field"><label>Ad</label><input type="text" id="qmName" /></div>
-        <button class="adm-complete" id="qmSave" style="margin-top:12px;">Kaydet</button>
+      <button type="button" class="adm-iconbtn" data-close="addMasterModal" aria-label="Kapat"><svg><use href="#i-x"/></svg></button>
+    </header>
+    <div class="adm-modalbody">
+      <div class="adm-field">
+        <label for="qmName">Usta Adı</label>
+        <input type="text" id="qmName" placeholder="Örn. Usta 4" />
+      </div>
+      <div class="adm-modalfoot">
+        <button type="button" class="adm-btn adm-btn--ghost" data-close="addMasterModal">Vazgeç</button>
+        <button type="button" class="adm-btn adm-btn--primary" id="qmSave">Kaydet</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="admin.js"></script>
+<div class="adm-toasts" id="admToasts" aria-live="polite"></div>
+
+<script src="admin.js"></script>
 </body>
 </html>

@@ -55,8 +55,8 @@ function showLogin() {
   app.classList.add('hidden');
 }
 
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-  e.preventDefault();
+const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+function doLogin() {
   const pw = document.getElementById('pw').value;
   if (pw === getPw()) {
     safeSessionSet(SESSION_KEY, '1');
@@ -64,7 +64,9 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   } else {
     document.getElementById('loginErr').textContent = 'Şifre hatalı.';
   }
-});
+}
+document.getElementById('loginForm').addEventListener('submit', (e) => { e.preventDefault(); doLogin(); });
+if (loginBtn) loginBtn.addEventListener('click', (e) => { e.preventDefault(); doLogin(); });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
   safeSessionRemove(SESSION_KEY);

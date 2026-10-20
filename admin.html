@@ -12,30 +12,8 @@
   <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
-  <!-- Login -->
-  <div class="adm-login" id="loginScreen">
-    <div class="adm-login__box">
-      <div class="logo" style="justify-content:center;margin-bottom:20px;">
-        <span class="logo__mark">B</span>
-        <span class="logo__text">Beyaz <em>Kuaför</em></span>
-      </div>
-      <h1>Yönetici Girişi</h1>
-      <p class="rv-hint">Devam etmek için şifrenizi girin.</p>
-      <form id="loginForm" class="rv-form">
-        <div class="rv-field">
-          <label for="pw">Şifre</label>
-          <input type="password" id="pw" required autofocus placeholder="••••••••" />
-        </div>
-        <p class="rv-error" id="loginErr"></p>
-        <button type="submit" class="btn btn--gold" style="width:100%;justify-content:center;">Giriş Yap</button>
-      </form>
-      <p class="adm-login__note">Varsayılan şifre: <code>beyaz2026</code> (giriş sonrası değiştirilebilir)</p>
-      <a href="index.html" class="link" style="display:block;text-align:center;margin-top:16px;">← Siteye Dön</a>
-    </div>
-  </div>
-
   <!-- Dashboard -->
-  <div class="adm-app hidden" id="app">
+  <div class="adm-app" id="app">
     <header class="header">
       <div class="container header__inner">
         <a href="index.html" class="logo">
@@ -123,7 +101,7 @@
       <!-- Settings -->
       <section class="rv-card">
         <h2>Ayarlar</h2>
-        <p class="rv-hint">Hizmet fiyatlarını ve şifreyi yönetin.</p>
+        <p class="rv-hint">Hizmet fiyatlarını yönetin.</p>
         <div class="adm-settings">
           <div>
             <h3>Hizmetler & Fiyatlar</h3>
@@ -133,21 +111,6 @@
               <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
               <button class="btn btn--sm btn--outline" id="addSvcBtn">Ekle</button>
             </div>
-          </div>
-          <div>
-            <h3>Şifre Değiştir</h3>
-            <form id="pwForm" class="rv-form">
-              <div class="rv-field">
-                <label for="newPw">Yeni şifre</label>
-                <input type="password" id="newPw" required />
-              </div>
-              <div class="rv-field">
-                <label for="newPw2">Tekrar</label>
-                <input type="password" id="newPw2" required />
-              </div>
-              <p class="rv-error" id="pwErr"></p>
-              <button type="submit" class="btn btn--sm btn--gold">Güncelle</button>
-            </form>
           </div>
         </div>
       </section>

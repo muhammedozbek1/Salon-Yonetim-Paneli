@@ -22,7 +22,7 @@ Ardından `http://localhost:8000` adresini açın.
 
 ## Yönetim Paneli
 
-- URL: `/admin.html` (`#pos`, `#history`, `#settings` ile sekmelere doğrudan erişilebilir)
+- URL: `/admin.html` (`#pos`, `#history`, `#finance`, `#settings` ile sekmelere doğrudan erişilebilir)
 - Varsayılan şifre: `beyaz2026` (panel içinden değiştirilebilir)
 
 ### Bölümler
@@ -30,6 +30,10 @@ Ardından `http://localhost:8000` adresini açın.
 - **Yeni İşlem** — Hizmet ve usta seçimi, ücret hesabı, ekstra hizmetler.
   - Ücret düzeltme butonları: artıranlar **mavi**, düşürenler **kırmızı**.
   - "İşlemi Tamamla" sonrası kayıt sağ paneldeki **Tamamlanan İşlemler** listesine düşer.
+  - Bu ekran salt operasyondur; ciro metrikleri **Mali İşlemler** sekmesindedir.
+- **Mali İşlemler** — Günlük/aylık/toplam ciro, günlük (son 14 gün) ve aylık (son 12 ay)
+  ciro grafikleri, hizmet ve usta bazlı kırılımlar, öne çıkan istatistikler.
+  - **Aylık PDF Rapor** (günlük dağılım grafiği + kırılımlar + gün dökümü) ve **Aylık CSV**.
 - **Gün Sonu** — Seçili günün ciro raporu: KPI'lar, usta/hizmet bazlı döküm, işlem tablosu.
   - **PDF Rapor İndir** ve **CSV** ile dışa aktarma; gün "kapatılıp" yeniden açılabilir.
 - **İş Geçmişi** — Tarih/usta/hizmet filtreleri, hızlı filtreler (Bugün / Bu Hafta / Bu Ay), PDF ve CSV çıktısı.

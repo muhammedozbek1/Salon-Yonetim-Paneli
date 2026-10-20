@@ -36,6 +36,9 @@
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.5 8.5 0 1 0 20 14.2z"/></symbol>
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V3.5M5.5 4.5h11l-2 3.6 2 3.6h-11"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="7.5" width="18" height="12" rx="2.6"/><path d="M4.5 7.5V6A1.5 1.5 0 0 1 6 4.5h11.5A1.5 1.5 0 0 1 19 6v1.5"/><path d="M16.6 13.5h.01"/></symbol>
+    <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="6.8" rx="5.4" ry="2.7"/><path d="M3.6 6.8v4c0 1.5 2.4 2.7 5.4 2.7 1.1 0 2.2-.15 3-.45"/><path d="M3.6 10.8v4.4c0 1.5 2.4 2.7 5.4 2.7"/><ellipse cx="15.6" cy="13.2" rx="5.4" ry="2.7"/><path d="M10.2 13.2v4c0 1.5 2.4 2.7 5.4 2.7s5.4-1.2 5.4-2.7v-4"/></symbol>
+    <symbol id="i-trending" viewBox="0 0 24 24"><path d="M3 16.8l5.6-5.6 3.4 3.4L21 5.4"/><path d="M15.2 5.4H21v5.8"/></symbol>
   </defs>
 </svg>
 
@@ -61,6 +64,10 @@
         <svg class="adm-navitem__icon"><use href="#i-history"/></svg>
         <span>İş Geçmişi</span>
         <span class="adm-navitem__badge" id="navJobCount">0</span>
+      </button>
+      <button type="button" class="adm-navitem" data-view="finance">
+        <svg class="adm-navitem__icon"><use href="#i-wallet"/></svg>
+        <span>Mali İşlemler</span>
       </button>
       <button type="button" class="adm-navitem" data-view="settings">
         <svg class="adm-navitem__icon"><use href="#i-sliders"/></svg>
@@ -104,47 +111,11 @@
       <!-- ---------- YENİ İŞLEM ---------- -->
       <section class="adm-view is-active" data-view="pos">
 
-        <!-- KPI şeridi -->
-        <div class="adm-kpis">
-          <div class="adm-kpi">
-            <span class="adm-kpi__icon adm-kpi__icon--a"><svg><use href="#i-cal"/></svg></span>
-            <div class="adm-kpi__body">
-              <span class="adm-kpi__label">Bugün</span>
-              <strong class="adm-kpi__value" id="kpiTodayCount">0</strong>
-              <span class="adm-kpi__meta" id="kpiTodayAmount">0 ₺</span>
-            </div>
-          </div>
-          <div class="adm-kpi">
-            <span class="adm-kpi__icon adm-kpi__icon--b"><svg><use href="#i-cal-month"/></svg></span>
-            <div class="adm-kpi__body">
-              <span class="adm-kpi__label">Bu Ay</span>
-              <strong class="adm-kpi__value" id="kpiMonthCount">0</strong>
-              <span class="adm-kpi__meta" id="kpiMonthAmount">0 ₺</span>
-            </div>
-          </div>
-          <div class="adm-kpi">
-            <span class="adm-kpi__icon adm-kpi__icon--c"><svg><use href="#i-layers"/></svg></span>
-            <div class="adm-kpi__body">
-              <span class="adm-kpi__label">Toplam İşlem</span>
-              <strong class="adm-kpi__value" id="kpiAllCount">0</strong>
-              <span class="adm-kpi__meta" id="kpiAllAmount">0 ₺</span>
-            </div>
-          </div>
-          <div class="adm-kpi">
-            <span class="adm-kpi__icon adm-kpi__icon--d"><svg><use href="#i-star"/></svg></span>
-            <div class="adm-kpi__body">
-              <span class="adm-kpi__label">En Çok Tercih</span>
-              <strong class="adm-kpi__value adm-kpi__value--sm" id="kpiTopName">—</strong>
-              <span class="adm-kpi__meta" id="kpiTopCount">0 kez</span>
-            </div>
-          </div>
-        </div>
-
         <div class="adm-pos">
 
           <!-- SOL: Hizmetler -->
           <div class="adm-pos__col">
-            <section class="adm-card adm-card--grow">
+            <section class="adm-card">
               <header class="adm-card__head">
                 <div>
                   <h2>Hizmetler</h2>
@@ -253,8 +224,8 @@
               </header>
               <div class="adm-card__body adm-card__body--flush adm-donelist" id="doneList"></div>
               <footer class="adm-card__foot">
-                <span>Bugünkü Ciro</span>
-                <strong id="doneTotal">0 ₺</strong>
+                <span>Bugünkü İşlem</span>
+                <strong id="doneDayCount">0</strong>
               </footer>
             </section>
           </div>
@@ -349,6 +320,151 @@
               <svg><use href="#i-search"/></svg>
               <p>Kayıt bulunamadı</p>
               <span>Filtreleri değiştirerek tekrar deneyin.</span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ---------- MALİ İŞLEMLER ---------- -->
+      <section class="adm-view" data-view="finance">
+        <div class="adm-kpis">
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--d"><svg><use href="#i-coins"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Günlük Ciro</span>
+              <strong class="adm-kpi__value" id="finDayAmount">0 ₺</strong>
+              <span class="adm-kpi__meta" id="finDayMeta">0 işlem</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--b"><svg><use href="#i-cal-month"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Aylık Ciro</span>
+              <strong class="adm-kpi__value" id="finMonthAmount">0 ₺</strong>
+              <span class="adm-kpi__meta" id="finMonthMeta">0 işlem</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--c"><svg><use href="#i-layers"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Toplam Ciro</span>
+              <strong class="adm-kpi__value" id="finTotalAmount">0 ₺</strong>
+              <span class="adm-kpi__meta" id="finTotalMeta">0 işlem</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--a"><svg><use href="#i-trending"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Günlük Ortalama</span>
+              <strong class="adm-kpi__value" id="finAvgAmount">0 ₺</strong>
+              <span class="adm-kpi__meta" id="finAvgMeta">Son 30 gün</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-finance">
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Günlük Ciro</h2>
+                <span class="adm-card__sub">Son 14 gün</span>
+              </div>
+              <span class="adm-card__count" id="finDayTotal">0 ₺</span>
+            </header>
+            <div class="adm-card__body">
+              <div class="adm-chart" id="finDayChart"></div>
+            </div>
+          </section>
+
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Aylık Ciro</h2>
+                <span class="adm-card__sub">Son 12 ay</span>
+              </div>
+              <span class="adm-card__count" id="finMonthTotal">0 ₺</span>
+            </header>
+            <div class="adm-card__body">
+              <div class="adm-chart" id="finMonthChart"></div>
+            </div>
+          </section>
+
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Hizmet Bazlı Ciro</h2>
+                <span class="adm-card__sub">Bu ay</span>
+              </div>
+            </header>
+            <div class="adm-card__body">
+              <div id="finSvcBreak" class="adm-break"></div>
+            </div>
+          </section>
+
+          <section class="adm-card">
+            <header class="adm-card__head">
+              <div>
+                <h2>Usta Bazlı Ciro</h2>
+                <span class="adm-card__sub">Bu ay</span>
+              </div>
+            </header>
+            <div class="adm-card__body">
+              <div id="finMasterBreak" class="adm-break"></div>
+            </div>
+          </section>
+
+          <section class="adm-card adm-finance__wide">
+            <header class="adm-card__head">
+              <div>
+                <h2>Öne Çıkanlar</h2>
+                <span class="adm-card__sub">En çok tercih edilen hizmet, usta ve gün</span>
+              </div>
+            </header>
+            <div class="adm-card__body adm-finance__tops">
+              <div class="adm-top">
+                <span class="adm-top__rank">1</span>
+                <div class="adm-top__body">
+                  <strong id="finTopService">—</strong>
+                  <span id="finTopServiceMeta">0 kez seçildi</span>
+                </div>
+              </div>
+              <div class="adm-top">
+                <span class="adm-top__rank">2</span>
+                <div class="adm-top__body">
+                  <strong id="finTopMaster">—</strong>
+                  <span id="finTopMasterMeta">0 işlem</span>
+                </div>
+              </div>
+              <div class="adm-top">
+                <span class="adm-top__rank">3</span>
+                <div class="adm-top__body">
+                  <strong id="finBestDay">—</strong>
+                  <span id="finBestDayMeta">En yüksek günlük ciro</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="adm-card adm-finance__reports">
+          <header class="adm-card__head">
+            <div>
+              <h2>Raporlar</h2>
+              <span class="adm-card__sub">Dönemsel ciro raporları</span>
+            </div>
+          </header>
+          <div class="adm-card__body adm-card__body--row">
+            <p>Aylık finans raporunu PDF veya CSV olarak indirin, gün sonu raporuna buradan geçin.</p>
+            <div class="adm-toolbar">
+              <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="finMonthPdf">
+                <svg><use href="#i-download"/></svg> Aylık PDF Rapor
+              </button>
+              <button type="button" class="adm-btn adm-btn--outline adm-btn--sm" id="finMonthCsv">
+                <svg><use href="#i-download"/></svg> Aylık CSV
+              </button>
+              <button type="button" class="adm-btn adm-btn--dark adm-btn--sm" id="finDayEnd">
+                <svg><use href="#i-flag"/></svg> Gün Sonu Raporu
+              </button>
             </div>
           </div>
         </section>

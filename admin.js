@@ -101,6 +101,7 @@
   const VIEW_META = {
     pos: { title: 'Yeni İşlem', sub: 'Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.' },
     history: { title: 'İş Geçmişi', sub: 'Kayıtlı tüm işlemleri filtreleyin, inceleyin ve raporlayın.' },
+    finance: { title: 'Mali İşlemler', sub: 'Günlük ve aylık ciro takibi, kırılımlar ve dönemsel raporlar.' },
     settings: { title: 'Ayarlar', sub: 'Hizmet fiyatlarını ve usta listesini yönetin.' }
   };
 
@@ -115,6 +116,7 @@
     $('#admPageSub').textContent = meta.sub;
     $('.adm-content').scrollTop = 0;
     if (name === 'history') renderJobs();
+    if (name === 'finance') renderFinance();
     if (name === 'settings') renderSettings();
     if (name === 'pos') { renderDoneList(); renderDayStatus(); }
     if (!skipHash) {
@@ -137,26 +139,11 @@
   function renderStats() {
     const jobs = getJobs();
     const today = todayISO();
-    const thisMonth = today.slice(0, 7);
     const todayJobs = jobs.filter((j) => j.date === today);
-    const monthJobs = jobs.filter((j) => (j.date || '').startsWith(thisMonth));
-
-    $('#kpiTodayCount').textContent = todayJobs.length;
-    $('#kpiTodayAmount').textContent = money(sum(todayJobs));
-    $('#kpiMonthCount').textContent = monthJobs.length;
-    $('#kpiMonthAmount').textContent = money(sum(monthJobs));
-    $('#kpiAllCount').textContent = jobs.length;
-    $('#kpiAllAmount').textContent = money(sum(jobs));
-
-    const counts = {};
-    jobs.forEach((j) => servicesOf(j).forEach((s) => { counts[s] = (counts[s] || 0) + 1; }));
-    let top = '—', max = 0;
-    for (const k in counts) if (counts[k] > max) { max = counts[k]; top = k; }
-    $('#kpiTopName').textContent = top;
-    $('#kpiTopCount').textContent = `${max} kez`;
 
     $('#sideToday').textContent = todayJobs.length;
     $('#navJobCount').textContent = jobs.length;
+    renderFinance();
   }
 
   /* ==================================================================
@@ -338,7 +325,7 @@
     const jobs = todayJobs();
     const box = $('#doneList');
     $('#doneCount').textContent = jobs.length;
-    $('#doneTotal').textContent = money(sum(jobs));
+    $('#doneDayCount').textContent = jobs.length;
 
     if (!jobs.length) {
       box.innerHTML = `
@@ -870,6 +857,172 @@
   });
 
   /* ==================================================================
+     MALİ İŞLEMLER (finans)
+  ================================================================== */
+  const isoDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  function monthJobsOf(key) {
+    return getJobs()
+      .filter((j) => (j.date || '').startsWith(key))
+      .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  }
+
+  function dailyBreakdown(jobs) {
+    const map = new Map();
+    jobs.forEach((j) => {
+      const cur = map.get(j.date) || { date: j.date, count: 0, amount: 0 };
+      cur.count += 1;
+      cur.amount += (j.amount || 0);
+      map.set(j.date, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /* Ayın tüm günleri (grafikte boş günler de görünsün) */
+  function monthDayList(key) {
+    const [yy, mm] = key.split('-').map(Number);
+    const last = new Date(yy, mm, 0).getDate();
+    const out = [];
+    for (let i = 1; i <= last; i++) out.push(`${key}-${String(i).padStart(2, '0')}`);
+    return out;
+  }
+
+  function renderChart(el, items) {
+    const max = Math.max(...items.map((i) => i.amount), 1);
+    el.innerHTML = items.map((it) => `
+      <div class="adm-chart__col" title="${escapeHtml(it.label)} — ${money(it.amount)} · ${it.count} işlem">
+        <span class="adm-chart__val${it.amount ? '' : ' is-zero'}">${money(it.amount)}</span>
+        <div class="adm-chart__track">
+          <span class="adm-chart__bar${it.amount ? '' : ' is-zero'}" style="height:${it.amount ? Math.max((it.amount / max) * 100, 3) : 2}%"></span>
+        </div>
+        <span class="adm-chart__label">${escapeHtml(it.label)}</span>
+      </div>`).join('');
+  }
+
+  function renderFinance() {
+    const jobs = getJobs();
+    const today = todayISO();
+    const monthKey = today.slice(0, 7);
+
+    const dayJobs = jobs.filter((j) => j.date === today);
+    const monthJobs = jobs.filter((j) => (j.date || '').startsWith(monthKey));
+
+    $('#finDayAmount').textContent = money(sum(dayJobs));
+    $('#finDayMeta').textContent = `${dayJobs.length} işlem`;
+    $('#finMonthAmount').textContent = money(sum(monthJobs));
+    $('#finMonthMeta').textContent = `${monthJobs.length} işlem`;
+    $('#finTotalAmount').textContent = money(sum(jobs));
+    $('#finTotalMeta').textContent = `${jobs.length} işlem`;
+
+    /* Son 30 gün — işlem yapılan günlerin ortalaması */
+    const last30 = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const dj = jobs.filter((j) => j.date === isoDate(d));
+      last30.push({ amount: sum(dj), count: dj.length });
+    }
+    const activeDays = last30.filter((x) => x.count > 0);
+    $('#finAvgAmount').textContent = money(activeDays.length ? sum(last30) / activeDays.length : 0);
+    $('#finAvgMeta').textContent = activeDays.length
+      ? `Son 30 gün · ${activeDays.length} işlem günü`
+      : 'Son 30 gün';
+
+    /* Günlük grafik — son 14 gün */
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const dj = jobs.filter((j) => j.date === isoDate(d));
+      days.push({
+        label: d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
+        amount: sum(dj),
+        count: dj.length
+      });
+    }
+    renderChart($('#finDayChart'), days);
+    $('#finDayTotal').textContent = money(sum(days));
+
+    /* Aylık grafik — son 12 ay */
+    const months = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const mj = jobs.filter((j) => (j.date || '').startsWith(key));
+      months.push({
+        label: d.toLocaleDateString('tr-TR', { month: 'short' }),
+        amount: sum(mj),
+        count: mj.length
+      });
+    }
+    renderChart($('#finMonthChart'), months);
+    $('#finMonthTotal').textContent = money(sum(months));
+
+    /* Bu ay kırılımları */
+    const d = reportData(monthJobs);
+    $('#finSvcBreak').innerHTML = breakdownHtml(d.services, d.total);
+    $('#finMasterBreak').innerHTML = breakdownHtml(d.masters, d.total);
+
+    /* En çok tercih edilen hizmet */
+    const counts = {};
+    jobs.forEach((j) => servicesOf(j).forEach((s) => { counts[s] = (counts[s] || 0) + 1; }));
+    let topSvc = '—', maxSvc = 0;
+    for (const k in counts) if (counts[k] > maxSvc) { maxSvc = counts[k]; topSvc = k; }
+    $('#finTopService').textContent = topSvc;
+    $('#finTopServiceMeta').textContent = `${maxSvc} kez seçildi`;
+
+    /* En çok işlem yapan usta (bu ay) */
+    let topMaster = '—', maxM = 0;
+    d.masters.forEach((m) => { if (m.count > maxM) { maxM = m.count; topMaster = m.name; } });
+    $('#finTopMaster').textContent = topMaster;
+    $('#finTopMasterMeta').textContent = `${maxM} işlem · bu ay`;
+
+    /* En yüksek günlük ciro */
+    const dayTotals = {};
+    jobs.forEach((j) => { dayTotals[j.date] = (dayTotals[j.date] || 0) + (j.amount || 0); });
+    let bestDate = null, bestAmt = 0;
+    for (const k in dayTotals) if (dayTotals[k] > bestAmt) { bestAmt = dayTotals[k]; bestDate = k; }
+    $('#finBestDay').textContent = bestDate ? fmtDate(bestDate) : '—';
+    $('#finBestDayMeta').textContent = bestDate ? `${money(bestAmt)} ciro` : 'Kayıt yok';
+  }
+
+  $('#finDayEnd').addEventListener('click', () => {
+    $('#dayEndDate').value = todayISO();
+    renderDayEnd();
+    openModal('dayEndModal');
+  });
+
+  $('#finMonthCsv').addEventListener('click', () => {
+    const key = todayISO().slice(0, 7);
+    const days = dailyBreakdown(monthJobsOf(key));
+    if (!days.length) { toast('Bu aya ait kayıt yok.', 'err'); return; }
+    const header = ['Tarih', 'İşlem Sayısı', 'Ortalama', 'Ciro'];
+    const rows = days.map((dd) => [dd.date, dd.count, money(Math.round(dd.amount / dd.count)), dd.amount]);
+    const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    downloadBlob('\uFEFF' + csv, `beyaz-kuafor-aylik-${key}.csv`, 'text/csv;charset=utf-8;');
+    toast('Aylık CSV indirildi');
+  });
+
+  $('#finMonthPdf').addEventListener('click', async () => {
+    const key = todayISO().slice(0, 7);
+    const jobs = monthJobsOf(key);
+    if (!jobs.length) { toast('Bu aya ait kayıt yok.', 'err'); return; }
+    const [yy, mm] = key.split('-').map(Number);
+    const monthLabel = new Date(yy, mm - 1, 1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+    await exportMonthlyPDF(jobs, {
+      title: 'AYLIK FİNANS RAPORU',
+      subtitle: 'Aylık ciro ve işlem dökümü',
+      dateLabel: monthLabel,
+      monthKey: key,
+      file: `beyaz-kuafor-aylik-rapor-${key}.pdf`
+    });
+  });
+
+  /* ==================================================================
      PDF MOTORU (bağımlılıksız — canvas → JPEG → PDF)
   ================================================================== */
   const R = {
@@ -1105,6 +1258,18 @@
     return pages;
   }
 
+  async function loadReportFonts() {
+    if (!document.fonts || !document.fonts.load) return;
+    await Promise.all([
+      document.fonts.load('400 14px Inter'),
+      document.fonts.load('600 14px Inter'),
+      document.fonts.load('700 14px Inter'),
+      document.fonts.load('400 11px Inter'),
+      document.fonts.load('600 26px "Playfair Display"'),
+      document.fonts.load('700 26px "Playfair Display"')
+    ]).catch(() => {});
+  }
+
   function canvasToJpegBytes(canvas) {
     const url = canvas.toDataURL('image/jpeg', 0.92);
     const b64 = url.slice(url.indexOf(',') + 1);
@@ -1162,19 +1327,177 @@
     return out;
   }
 
+  function drawBars(ctx, x, y, w, h, items, showValues = true) {
+    const max = Math.max(...items.map((i) => i.amount), 1);
+    const gap = 8;
+    const n = Math.max(items.length, 1);
+    const bw = (w - gap * (n - 1)) / n;
+    const areaH = h - 46;
+    const valuesFit = bw >= 46;
+
+    items.forEach((it, i) => {
+      const bx = x + i * (bw + gap);
+      ctx.fillStyle = '#eef0f4';
+      rrect(ctx, bx, y + 26, bw, areaH, 5); ctx.fill();
+      const bh = it.amount ? Math.max((it.amount / max) * areaH, 4) : 2;
+      ctx.fillStyle = it.amount ? R.gold2 : '#dfe3e9';
+      rrect(ctx, bx, y + 26 + areaH - bh, bw, bh, 5); ctx.fill();
+
+      ctx.textAlign = 'center';
+      if (showValues && valuesFit) {
+        ctx.fillStyle = R.ink2; ctx.font = FONT(600, 11);
+        ctx.fillText(fitText(ctx, money(it.amount), bw), bx + bw / 2, y + 18);
+      }
+      ctx.fillStyle = R.muted; ctx.font = FONT(400, 11);
+      ctx.fillText(fitText(ctx, it.label, bw), bx + bw / 2, y + h - 6);
+      ctx.textAlign = 'left';
+    });
+  }
+
+  function renderMonthlyPages(jobs, meta) {
+    const { W, H, M } = R;
+    const pages = [];
+    let ctx = null, y = 0;
+    const LIMIT = H - 110;
+
+    const newPage = () => {
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const cx = c.getContext('2d');
+      cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, W, H);
+      cx.textBaseline = 'alphabetic';
+      pages.push({ canvas: c, ctx: cx });
+      ctx = cx;
+      y = drawHeader(cx, meta);
+    };
+    newPage();
+
+    const days = dailyBreakdown(jobs);
+    const d = reportData(jobs);
+    const avgDay = days.length ? d.total / days.length : 0;
+    const best = days.slice().sort((a, b) => b.amount - a.amount)[0];
+
+    y = drawKpiRow(ctx, M, y, W - 2 * M, [
+      { label: 'Toplam Ciro', value: money(d.total), gold: true },
+      { label: 'İşlem Sayısı', value: String(d.count) },
+      { label: 'İşlem Günü', value: String(days.length) },
+      { label: 'Günlük Ortalama', value: money(avgDay) }
+    ]) + 28;
+
+    /* Günlük ciro dağılımı — ayın tüm günleri */
+    const chartH = 216;
+    const monthKey = meta.monthKey || (jobs[0] ? jobs[0].date.slice(0, 7) : todayISO().slice(0, 7));
+    const dayMap = new Map(days.map((dd) => [dd.date, dd.amount]));
+    const chartItems = monthDayList(monthKey).map((iso) => ({
+      label: fmtDate(iso),
+      amount: dayMap.get(iso) || 0
+    }));
+
+    if (y + chartH + 40 > LIMIT) newPage();
+    ctx.fillStyle = R.ink; ctx.font = FONT(700, 14);
+    ctx.fillText('GÜNLÜK CİRO DAĞILIMI', M, y + 14);
+    drawBars(ctx, M, y + 24, W - 2 * M, chartH, chartItems);
+    y += chartH + 48;
+
+    /* Kırılımlar */
+    const colW = (W - 2 * M - 20) / 2;
+    const rowsCount = Math.max(d.masters.length, d.services.length);
+    const blockH = 44 + (rowsCount ? rowsCount * 34 + 10 : 40);
+    if (y + blockH > LIMIT) newPage();
+    drawBreakdown(ctx, M, y, colW, 'Usta Bazlı Ciro', d.masters, d.total);
+    drawBreakdown(ctx, M + colW + 20, y, colW, 'Hizmet Bazlı Ciro', d.services, d.total);
+    y += blockH + 28;
+
+    /* Gün dökümü tablosu */
+    const columns = [
+      { key: 'date', label: 'Tarih', w: 260 },
+      { key: 'count', label: 'İşlem', w: 160 },
+      { key: 'avg', label: 'Ortalama', w: 330 },
+      { key: 'amount', label: 'Ciro', w: 362, align: 'right', strong: true }
+    ];
+
+    const drawHead = () => { y = drawTableHead(ctx, y, columns); };
+
+    if (!days.length) {
+      ctx.fillStyle = R.muted; ctx.font = FONT(400, 16);
+      ctx.fillText('Bu ayda kayıtlı işlem bulunmuyor.', M, y + 40);
+      y += 70;
+    } else {
+      drawHead();
+      days.forEach((dd, i) => {
+        if (y + 46 > LIMIT) { newPage(); drawHead(); }
+        if (i % 2 === 1) { ctx.fillStyle = '#fbfbfc'; ctx.fillRect(M, y, W - 2 * M, 46); }
+        const row = {
+          date: fmtDate(dd.date),
+          count: String(dd.count),
+          avg: money(Math.round(dd.amount / dd.count)),
+          amount: money(dd.amount)
+        };
+        let cx = M;
+        columns.forEach((col) => {
+          ctx.fillStyle = col.strong ? R.ink : R.ink2;
+          ctx.font = col.strong ? FONT(700, 14) : FONT(400, 14);
+          ctx.textAlign = col.align === 'right' ? 'right' : 'left';
+          const tx = col.align === 'right' ? cx + col.w - 16 : cx + 16;
+          ctx.fillText(fitText(ctx, row[col.key], col.w - 24), tx, y + 29);
+          cx += col.w;
+        });
+        ctx.textAlign = 'left';
+        ctx.fillStyle = R.line; ctx.fillRect(M, y + 46, W - 2 * M, 1);
+        y += 46;
+      });
+
+      if (y + 64 > LIMIT) newPage();
+      ctx.fillStyle = R.goldSoft;
+      rrect(ctx, M, y + 10, W - 2 * M, 54, 10); ctx.fill();
+      ctx.strokeStyle = '#efdfb6'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = R.ink2; ctx.font = FONT(600, 15);
+      ctx.fillText(`TOPLAM  ·  ${d.count} işlem  ·  ${days.length} gün`, M + 20, y + 43);
+      ctx.fillStyle = R.goldDeep; ctx.font = SERIF(700, 26);
+      ctx.textAlign = 'right';
+      ctx.fillText(money(d.total), W - M - 20, y + 44);
+      ctx.textAlign = 'left';
+      y += 64;
+
+      if (best) {
+        ctx.fillStyle = R.muted; ctx.font = FONT(400, 13);
+        ctx.fillText(`En yüksek gün: ${fmtDate(best.date)} — ${money(best.amount)} (${best.count} işlem)`, M, y + 20);
+        y += 30;
+      }
+    }
+
+    pages.forEach((p, i) => drawFooter(p.ctx, meta, i + 1, pages.length));
+    return pages;
+  }
+
+  async function exportMonthlyPDF(jobs, meta) {
+    const btn = $('#finMonthPdf');
+    const label = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span>Rapor hazırlanıyor…</span>'; }
+    try {
+      await loadReportFonts();
+      const fullMeta = {
+        ...meta,
+        generatedAt: `Rapor: ${new Date().toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}`
+      };
+      const pages = renderMonthlyPages(jobs, fullMeta);
+      const images = pages.map((p) => ({ data: canvasToJpegBytes(p.canvas), w: p.canvas.width, h: p.canvas.height }));
+      downloadBlob(buildPdf(images), meta.file, 'application/pdf');
+      toast('Aylık PDF rapor indirildi');
+    } catch (err) {
+      console.error(err);
+      toast('PDF oluşturulamadı.', 'err');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = label; }
+    }
+  }
+
   async function exportReportPDF(jobs, meta) {
     const btn = $('#dayEndPdf');
     const label = btn ? btn.innerHTML : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<span>Rapor hazırlanıyor…</span>'; }
     try {
-      if (document.fonts && document.fonts.load) {
-        await Promise.all([
-          document.fonts.load('400 14px Inter'),
-          document.fonts.load('700 14px Inter'),
-          document.fonts.load('600 26px "Playfair Display"'),
-          document.fonts.load('700 26px "Playfair Display"')
-        ]).catch(() => {});
-      }
+      await loadReportFonts();
       const fullMeta = {
         ...meta,
         generatedAt: `Rapor: ${new Date().toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}`

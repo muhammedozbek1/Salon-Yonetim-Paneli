@@ -224,6 +224,7 @@ a { color: inherit; text-decoration: none; }
   .nav.open { display: flex; }
   .burger { display: flex; margin-left: auto; }
   .header__cta { display: none; }
+  .header__admin { display: none; }
   .about, .hours, .contact { grid-template-columns: 1fr; gap: 40px; }
   .services { grid-template-columns: 1fr; }
   .amenities { grid-template-columns: repeat(3, 1fr); }

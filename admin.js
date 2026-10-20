@@ -10,19 +10,27 @@ const DEFAULT_SVCS = [
   { name: 'Saç & Sakal Paketi', price: 300 }
 ];
 
-// ---------- Storage helpers ----------
-function getPw() { return localStorage.getItem(PW_KEY) || DEFAULT_PW; }
-function setPw(p) { localStorage.setItem(PW_KEY, p); }
-function getJobs() { try { return JSON.parse(localStorage.getItem(JOBS_KEY) || '[]'); } catch { return []; } }
-function saveJobs(j) { localStorage.setItem(JOBS_KEY, JSON.stringify(j)); }
+// ---------- Storage helpers (safe) ----------
+function safeGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
+function safeSet(key, val) { try { localStorage.setItem(key, val); } catch {} }
+function safeSessionGet(key) { try { return sessionStorage.getItem(key); } catch { return null; } }
+function safeSessionSet(key, val) { try { sessionStorage.setItem(key, val); } catch {} }
+function safeSessionRemove(key) { try { sessionStorage.removeItem(key); } catch {} }
+
+function getPw() { return safeGet(PW_KEY) || DEFAULT_PW; }
+function setPw(p) { safeSet(PW_KEY, p); }
+function getJobs() { try { return JSON.parse(safeGet(JOBS_KEY) || '[]'); } catch { return []; } }
+function saveJobs(j) { safeSet(JOBS_KEY, JSON.stringify(j)); }
 function getSvcs() {
   try {
-    const s = JSON.parse(localStorage.getItem(SVCS_KEY));
+    const s = JSON.parse(safeGet(SVCS_KEY));
     if (Array.isArray(s) && s.length) return s;
   } catch {}
   return DEFAULT_SVCS.map(x => ({...x}));
 }
-function saveSvcs(s) { localStorage.setItem(SVCS_KEY, JSON.stringify(s)); }
+function saveSvcs(s) { safeSet(SVCS_KEY, JSON.stringify(s)); }
+
+function isLoggedIn() { return safeSessionGet(SESSION_KEY) === '1'; }
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -51,7 +59,7 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const pw = document.getElementById('pw').value;
   if (pw === getPw()) {
-    sessionStorage.setItem(SESSION_KEY, '1');
+    safeSessionSet(SESSION_KEY, '1');
     showApp();
   } else {
     document.getElementById('loginErr').textContent = 'Şifre hatalı.';
@@ -59,7 +67,7 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
 });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem(SESSION_KEY);
+  safeSessionRemove(SESSION_KEY);
   showLogin();
 });
 

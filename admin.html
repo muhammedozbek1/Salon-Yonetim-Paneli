@@ -11,110 +11,176 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="admin.css" />
 </head>
-<body>
-  <!-- Dashboard -->
-  <div class="adm-app" id="app">
-    <header class="header">
-      <div class="container header__inner">
-        <a href="index.html" class="logo">
-          <span class="logo__mark">B</span>
-          <span class="logo__text">Beyaz <em>Kuaför</em></span>
-        </a>
-        <span class="adm-badge">Yönetim Paneli</span>
-        <button class="btn btn--sm btn--ghost" id="logoutBtn" style="margin-left:auto;">Çıkış</button>
+<body class="adm-body">
+  <!-- Top bar -->
+  <header class="adm-top">
+    <div class="adm-brand">
+      <span class="logo__mark" style="width:32px;height:32px;font-size:16px;">B</span>
+      <span>Beyaz Kuaför — Yönetim</span>
+    </div>
+    <div class="adm-topstats">
+      <div class="adm-ts"><span>Bugün</span><strong id="stToday">0</strong><em id="stTodayAmt">0₺</em></div>
+      <div class="adm-ts"><span>Bu Ay</span><strong id="stMonth">0</strong><em id="stMonthAmt">0₺</em></div>
+      <div class="adm-ts"><span>Toplam</span><strong id="stAll">0</strong><em id="stAllAmt">0₺</em></div>
+      <div class="adm-ts"><span>En Çok</span><strong id="stTop" style="font-size:14px;">—</strong></div>
+    </div>
+    <div class="adm-topactions">
+      <button class="adm-tbtn" id="histBtn">📋 Geçmiş</button>
+      <button class="adm-tbtn" id="settBtn">⚙️ Ayarlar</button>
+      <a class="adm-tbtn" href="index.html">🌐 Site</a>
+    </div>
+  </header>
+
+  <!-- Main (no scroll) -->
+  <main class="adm-main">
+    <!-- Services -->
+    <section class="adm-panel adm-services">
+      <div class="adm-panelhead">
+        <h3>Hizmetler</h3>
+        <button class="adm-mini" id="addSvcQuick">+ Ekle</button>
       </div>
-    </header>
+      <div id="svcBoxes" class="adm-svcgrid"></div>
+    </section>
 
-    <main class="container adm-main">
-      <!-- Summary cards -->
-      <div class="adm-stats" id="stats">
-        <div class="adm-stat"><span>Bugün</span><strong id="stToday">0</strong><small id="stTodayAmt">0 ₺</small></div>
-        <div class="adm-stat"><span>Bu Ay</span><strong id="stMonth">0</strong><small id="stMonthAmt">0 ₺</small></div>
-        <div class="adm-stat"><span>Toplam</span><strong id="stAll">0</strong><small id="stAllAmt">0 ₺</small></div>
-        <div class="adm-stat"><span>En Çok</span><strong id="stTop">—</strong><small>hizmet</small></div>
+    <!-- Masters -->
+    <section class="adm-panel adm-masters">
+      <div class="adm-panelhead">
+        <h3>Usta</h3>
+        <button class="adm-mini" id="addMasterQuick">+ Ekle</button>
       </div>
+      <div id="masterBoxes" class="adm-mastergrid"></div>
+    </section>
 
-      <!-- Add job -->
-      <section class="rv-card">
-        <h2>Yeni İş Ekle</h2>
-        <p class="rv-hint">Müşteriye yaptığınız hizmeti ve alınan ücreti girin.</p>
-        <form id="jobForm" class="rv-form">
-          <div class="adm-formgrid">
-            <div class="rv-field">
-              <label for="jDate">Tarih</label>
-              <input type="date" id="jDate" required />
-            </div>
-            <div class="rv-field">
-              <label for="jTime">Saat</label>
-              <input type="time" id="jTime" />
-            </div>
-            <div class="rv-field">
-              <label for="jCustomer">Müşteri (isteğe bağlı)</label>
-              <input type="text" id="jCustomer" placeholder="Ad Soyad" />
-            </div>
-            <div class="rv-field">
-              <label for="jService">Hizmet</label>
-              <select id="jService"></select>
-            </div>
-            <div class="rv-field">
-              <label for="jAmount">Ücret (₺)</label>
-              <input type="number" id="jAmount" min="0" step="1" required />
-            </div>
-            <div class="rv-field">
-              <label for="jNote">Not</label>
-              <input type="text" id="jNote" placeholder="Opsiyonel" />
-            </div>
-          </div>
-          <p class="rv-error" id="jobErr"></p>
-          <div class="rv-nav">
-            <button type="submit" class="btn btn--gold">Kaydet ✓</button>
-          </div>
-        </form>
-      </section>
+    <!-- Amount -->
+    <section class="adm-panel adm-amount">
+      <h3>Ücret</h3>
+      <div class="adm-amountdisplay" id="amountDisplay">0 ₺</div>
+      <div class="adm-amtrow">
+        <button class="adm-amtbtn" data-delta="-10">−10</button>
+        <button class="adm-amtbtn" data-delta="+10">+10</button>
+        <button class="adm-amtbtn" data-delta="-50">−50</button>
+        <button class="adm-amtbtn" data-delta="+50">+50</button>
+      </div>
+      <div id="amtPresets" class="adm-presets"></div>
+    </section>
 
-      <!-- Filters -->
-      <section class="rv-card">
-        <div class="rv-listhead">
-          <h2>İş Geçmişi</h2>
-          <div class="rv-listactions">
-            <input type="date" id="fFrom" />
-            <input type="date" id="fTo" />
-            <input type="text" id="fSearch" placeholder="Ara (müşteri/hizmet)" />
-            <button class="btn btn--sm btn--outline" id="applyFilter">Filtrele</button>
-            <button class="btn btn--sm btn--ghost" id="clearFilter">Temizle</button>
-            <button class="btn btn--sm btn--outline" id="exportBtn">CSV İndir</button>
-          </div>
+    <!-- Extra services -->
+    <section class="adm-panel adm-extra">
+      <div class="adm-panelhead">
+        <h3>Ekstra Hizmet</h3>
+      </div>
+      <div id="extraChips" class="adm-chips"></div>
+      <button class="adm-mini adm-extrabtn" id="extraPickBtn">+ Ekstra Ekle</button>
+    </section>
+
+    <!-- Summary -->
+    <section class="adm-panel adm-summary">
+      <h3>Özet</h3>
+      <div id="summaryList" class="adm-summarylist"></div>
+      <div class="adm-total">Toplam <strong id="totalAmt">0 ₺</strong></div>
+      <button class="adm-complete" id="completeBtn">İşlemi Tamamla ✓</button>
+      <p class="adm-msg" id="completeMsg"></p>
+    </section>
+  </main>
+
+  <!-- Modal: History -->
+  <div class="adm-modal" id="histModal">
+    <div class="adm-modalbox">
+      <div class="adm-modalhead">
+        <h3>İş Geçmişi</h3>
+        <div class="adm-modalactions">
+          <button class="adm-mini" id="exportBtn">CSV İndir</button>
+          <button class="adm-mini" id="histClose">✕</button>
+        </div>
+      </div>
+      <div class="adm-modalbody">
+        <div class="adm-filterrow">
+          <input type="date" id="fFrom" />
+          <input type="date" id="fTo" />
+          <input type="text" id="fSearch" placeholder="Ara" />
+          <button class="adm-mini" id="applyFilter">Filtrele</button>
+          <button class="adm-mini" id="clearFilter">Temizle</button>
         </div>
         <div class="adm-tablewrap">
-          <table class="adm-table" id="jobTable">
-            <thead>
-              <tr>
-                <th>Tarih</th><th>Saat</th><th>Müşteri</th><th>Hizmet</th><th>Ücret</th><th>Not</th><th></th>
-              </tr>
-            </thead>
+          <table class="adm-table">
+            <thead><tr><th>Tarih</th><th>Saat</th><th>Usta</th><th>Hizmetler</th><th>Ücret</th><th></th></tr></thead>
             <tbody id="jobBody"></tbody>
           </table>
         </div>
         <p class="rv-empty" id="jobEmpty" style="display:none;">Kayıt bulunamadı.</p>
-      </section>
+      </div>
+    </div>
+  </div>
 
-      <!-- Settings -->
-      <section class="rv-card">
-        <h2>Ayarlar</h2>
-        <p class="rv-hint">Hizmet fiyatlarını yönetin.</p>
-        <div class="adm-settings">
-          <div>
-            <h3>Hizmetler & Fiyatlar</h3>
-            <div id="svcList" class="adm-svclist"></div>
-            <div class="adm-addsvc">
-              <input type="text" id="newSvcName" placeholder="Hizmet adı" />
-              <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
-              <button class="btn btn--sm btn--outline" id="addSvcBtn">Ekle</button>
-            </div>
+  <!-- Modal: Settings -->
+  <div class="adm-modal" id="settModal">
+    <div class="adm-modalbox">
+      <div class="adm-modalhead">
+        <h3>Ayarlar</h3>
+        <button class="adm-mini" id="settClose">✕</button>
+      </div>
+      <div class="adm-modalbody adm-settings">
+        <div>
+          <h4>Hizmetler</h4>
+          <div id="svcList" class="adm-svclist"></div>
+          <div class="adm-addsvc">
+            <input type="text" id="newSvcName" placeholder="Hizmet adı" />
+            <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
+            <button class="adm-mini" id="addSvcBtn">Ekle</button>
           </div>
         </div>
-      </section>
-    </main>
+        <div>
+          <h4>Ustalar</h4>
+          <div id="masterList" class="adm-svclist"></div>
+          <div class="adm-addsvc">
+            <input type="text" id="newMasterName" placeholder="Usta adı" />
+            <button class="adm-mini" id="addMasterBtn">Ekle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Extra picker -->
+  <div class="adm-modal" id="extraModal">
+    <div class="adm-modalbox adm-modalbox--sm">
+      <div class="adm-modalhead">
+        <h3>Ekstra Hizmet Seç</h3>
+        <button class="adm-mini" id="extraClose">✕</button>
+      </div>
+      <div class="adm-modalbody">
+        <div id="extraPickList" class="adm-svcgrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add service quick -->
+  <div class="adm-modal" id="addSvcModal">
+    <div class="adm-modalbox adm-modalbox--sm">
+      <div class="adm-modalhead">
+        <h3>Yeni Hizmet</h3>
+        <button class="adm-mini" id="addSvcClose">✕</button>
+      </div>
+      <div class="adm-modalbody">
+        <div class="rv-field"><label>Ad</label><input type="text" id="qsName" /></div>
+        <div class="rv-field"><label>Fiyat</label><input type="number" id="qsPrice" min="0" /></div>
+        <button class="adm-complete" id="qsSave" style="margin-top:12px;">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add master quick -->
+  <div class="adm-modal" id="addMasterModal">
+    <div class="adm-modalbox adm-modalbox--sm">
+      <div class="adm-modalhead">
+        <h3>Yeni Usta</h3>
+        <button class="adm-mini" id="addMasterClose">✕</button>
+      </div>
+      <div class="adm-modalbody">
+        <div class="rv-field"><label>Ad</label><input type="text" id="qmName" /></div>
+        <button class="adm-complete" id="qmSave" style="margin-top:12px;">Kaydet</button>
+      </div>
+    </div>
   </div>
 
   <script src="admin.js"></script>

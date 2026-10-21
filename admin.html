@@ -295,7 +295,7 @@
 
       <!-- ---------- GEÇMİŞ ---------- -->
       <section class="adm-view" data-view="history">
-        <div class="adm-kpis adm-kpis--3">
+        <div class="adm-kpis">
           <div class="adm-kpi">
             <span class="adm-kpi__icon adm-kpi__icon--c"><svg><use href="#i-layers"/></svg></span>
             <div class="adm-kpi__body">
@@ -305,11 +305,19 @@
             </div>
           </div>
           <div class="adm-kpi">
+            <span class="adm-kpi__icon adm-kpi__icon--d"><svg><use href="#i-trending"/></svg></span>
+            <div class="adm-kpi__body">
+              <span class="adm-kpi__label">Bugünün Ciro</span>
+              <strong class="adm-kpi__value" id="histToday">0 ₺</strong>
+              <span class="adm-kpi__meta" id="histTodayMeta">Bugün</span>
+            </div>
+          </div>
+          <div class="adm-kpi">
             <span class="adm-kpi__icon adm-kpi__icon--b"><svg><use href="#i-cal-month"/></svg></span>
             <div class="adm-kpi__body">
-              <span class="adm-kpi__label">Toplam Ciro</span>
+              <span class="adm-kpi__label" id="histTotalLabel">Toplam Ciro</span>
               <strong class="adm-kpi__value" id="histTotal">0 ₺</strong>
-              <span class="adm-kpi__meta">Seçili filtreye göre</span>
+              <span class="adm-kpi__meta" id="histTotalMeta">Tüm zamanlar</span>
             </div>
           </div>
           <div class="adm-kpi">

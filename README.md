@@ -139,6 +139,9 @@ PIN sunucuda **scrypt + tuz** ile saklanır; tüm cihazlarda aynı geçerlidir.
 - **Gün Sonu** — Seçili günün ciro raporu: KPI'lar, usta/hizmet bazlı döküm, işlem tablosu.
   - **PDF Rapor İndir** ve **CSV** ile dışa aktarma; gün "kapatılıp" yeniden açılabilir.
 - **İş Geçmişi** — Tarih/usta/hizmet filtreleri, hızlı filtreler (Bugün / Bu Hafta / Bu Ay), PDF ve CSV çıktısı.
+  - KPI kartları: **Kayıt Sayısı**, **Bugünün Ciro** (filtreden bağımsız), **filtreye göre ciro**
+    (başlığı filtre ile değişir: *Günlük Ciro* / *Haftalık Ciro* / *Aylık Ciro* / *Toplam Ciro*,
+    altında dönem yazılı) ve **Son İşlem**.
 - **Usta Hesapları** — Günlük/haftalık/aylık/özel aralık dönem seçimi; işlem sayısı, ciro,
   usta hak edişi, dükkan payı, ödenen ve kalan bakiye. Usta detayında işlem listesi
   (tarih, hizmet, ücret, uygulanan oran, usta payı) ve usta ödemesi kaydı (tarih, tutar, not).

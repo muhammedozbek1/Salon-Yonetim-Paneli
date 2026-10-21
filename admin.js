@@ -683,6 +683,42 @@
     return jobs.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
   }
 
+  /** Filtreye göre ciro kartının başlığı ve dönem açıklaması */
+  function filterPeriod() {
+    const active = document.querySelector('.adm-chipbtn.is-active');
+    const quick = active ? active.dataset.quick : 'all';
+    const from = $('#fFrom').value;
+    const to = $('#fTo').value;
+    const today = todayISO();
+    const d = new Date();
+    const isoOf = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    const monday = new Date(d); monday.setDate(d.getDate() - d.getDay() + 1);
+
+    const monthName = (iso) => {
+      if (!iso) return '';
+      const dt = new Date(iso + 'T00:00:00');
+      return dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+    };
+
+    /* Hızlı filtre butonu, tarih alanlarıyla da tutarlıysa ona göre adlandır */
+    if (quick === 'today' && from === today && to === today) {
+      return { label: 'Günlük Ciro', meta: fmtDate(today) };
+    }
+    if (quick === 'week' && from === isoOf(monday) && to === today) {
+      return { label: 'Haftalık Ciro', meta: `${fmtDate(from)} – ${fmtDate(to)}` };
+    }
+    if (quick === 'month' && from === today.slice(0, 8) + '01' && to === today) {
+      return { label: 'Aylık Ciro', meta: monthName(from) };
+    }
+    if (from || to) {
+      return {
+        label: 'Toplam Ciro',
+        meta: `${from ? fmtDate(from) : 'Başlangıç'} – ${to ? fmtDate(to) : 'Bugün'}`
+      };
+    }
+    return { label: 'Toplam Ciro', meta: 'Tüm zamanlar' };
+  }
+
   function renderJobs() {
     filteredJobs = currentFilter();
     const tbody = $('#jobBody');
@@ -690,8 +726,19 @@
     const empty = $('#jobEmpty');
 
     $('#histCount').textContent = filteredJobs.length;
-    $('#histTotal').textContent = money(sum(filteredJobs));
     $('#histAvg').textContent = `Ort. ${money(filteredJobs.length ? sum(filteredJobs) / filteredJobs.length : 0)}`;
+
+    /* Bugünün ciro — filtreten bağımsız */
+    const today = todayISO();
+    const todayJobs = getJobs().filter((j) => j.date === today);
+    $('#histToday').textContent = money(sum(todayJobs));
+    $('#histTodayMeta').textContent = todayJobs.length ? `${todayJobs.length} işlem · ${fmtDate(today)}` : fmtDate(today);
+
+    /* Filtreye göre ciro — başlık ve dönem filtrele birlikte değişir */
+    const period = filterPeriod();
+    $('#histTotalLabel').textContent = period.label;
+    $('#histTotalMeta').textContent = period.meta;
+    $('#histTotal').textContent = money(sum(filteredJobs));
 
     if (filteredJobs.length) {
       const last = filteredJobs[0];

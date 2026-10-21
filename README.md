@@ -146,6 +146,10 @@ PIN sunucuda **scrypt + tuz** ile saklanır; tüm cihazlarda aynı geçerlidir.
   işlem dökümü ve **günü kapatma**: kasadaki nakit sayılıp girilir, sistemde kayıtlı
   nakitle karşılaştırılır, fark (fazla / eksik / fark yok) gösterilir. Not ve gerekçe
   ile kapanış; kapatılan gün kilitlenir, sonradan değişiklik **düzeltme kaydı** ile yapılır.
+  - Kapatılan günlerde **yeni işlem alınamaz**. POS ekranında uyarı çıkar ve
+    **"Günü Yeniden Aç"** düğmesi sunulur; Kasa sekmesindeki düğme de kapalı günde
+    "Günü Yeniden Aç" olarak çalışır. Yeniden açarken gerekçe sorulur, kapanış kaydı
+    geçmişte kalır ve "yeniden açıldı" düzeltmesi eklenir.
 - **Pay Ayarları** — Varsayılan pay oranı, usta başına oran, hizmet bazlı istisna
   (usta + hizmet) ve oran değişiklik geçmişi (kim, ne zaman, eski → yeni).
 - **Ayarlar** — Hizmet adı/fiyat düzenleme, usta yönetimi, **PIN kodu** (Mali İşlemler

@@ -530,8 +530,105 @@
     return { jobs, cash, card, total: cash + card, paid };
   }
 
-  const closingFor = (date) => getClosings().find((c) => c.date === date);
+  /** Kapanış kaydı — yeniden açılmış olanlar hariç (gün kilitli mi?) */
+  const closingFor = (date) => getClosings().find((c) => c.date === date && !c.reopened);
   const isLocked = (date) => !!closingFor(date);
+
+  /** Tarihin kapanış kaydı (yeniden açılmış olsa bile) */
+  const closingRecord = (date) => getClosings().find((c) => c.date === date);
+
+  /** Eski "kapatılan günler" listesi ile uyum */
+  const syncLegacyClosed = (date, closed) => {
+    if (!api.getClosedDays || !api.saveClosedDays) return;
+    const list = api.getClosedDays().filter((d) => d !== date);
+    if (closed) list.push(date);
+    api.saveClosedDays(list);
+  };
+
+  /**
+   * Kapatılmış günü yeniden açar — yeni işlem alınabilir hale gelir.
+   * Kapanış kaydı geçmiş olarak saklanır, "yeniden açıldı" düzeltmesi eklenir.
+   */
+  function reopenDay(date) {
+    const closing = closingRecord(date);
+    if (!closing || closing.reopened) return false;
+
+    const reason = prompt(
+      `${api.fmtDate(date)} günü yeniden açılacak.\n` +
+      'Bu güne ait kapanış kaydı geçmişte kalır, gün tekrar işlem almaya açılır.\n\n' +
+      'Gerekçe:',
+      ''
+    );
+    if (!reason || !reason.trim()) {
+      toast('Gerekçe girilmedi, işlem iptal edildi.', 'err');
+      return false;
+    }
+
+    const closings = getClosings();
+    const idx = closings.findIndex((c) => c.id === closing.id);
+    closings[idx] = {
+      ...closings[idx],
+      reopened: true,
+      reopenedAt: new Date().toISOString(),
+      reopenReason: reason.trim(),
+      corrections: closings[idx].corrections || []
+    };
+    closings[idx].corrections.push({
+      ts: new Date().toISOString(),
+      action: 'Gün yeniden açıldı',
+      detail: 'Gün tekrar işlem almaya açıldı',
+      reason: reason.trim(),
+      by: 'Yönetici'
+    });
+    saveClosings(closings);
+    syncLegacyClosed(date, false);
+    toast(`${api.fmtDate(date)} yeniden açıldı`);
+    return true;
+  }
+
+  /** Günü kapatır (Gün Sonu raporundan) */
+  function closeDay(date) {
+    const data = cashOf(date);
+    const closings = getClosings();
+    const existing = closingRecord(date);
+    const payload = {
+      id: existing ? existing.id : uid('C'),
+      date,
+      expectedCashKurus: data.cash,
+      expectedCardKurus: data.card,
+      expectedTotalKurus: data.total,
+      actualCashKurus: existing && !existing.reopened ? existing.actualCashKurus : data.cash,
+      actualCardKurus: 0,
+      differenceKurus: 0,
+      paidToMastersKurus: data.paid,
+      note: existing ? (existing.note || '') : '',
+      closedAt: new Date().toISOString(),
+      corrections: existing ? (existing.corrections || []) : []
+    };
+    if (existing) {
+      payload.corrections.push({
+        ts: new Date().toISOString(),
+        action: 'Gün kapatıldı',
+        detail: `Sistemdeki nakit ${fmtKurus(data.cash)}`,
+        reason: 'Gün sonu raporundan kapatıldı',
+        by: 'Yönetici'
+      });
+      const idx = closings.findIndex((c) => c.id === existing.id);
+      closings[idx] = payload;
+    } else {
+      closings.push(payload);
+    }
+    saveClosings(closings);
+    syncLegacyClosed(date, true);
+    toast(`${api.fmtDate(date)} kapatıldı`);
+    return true;
+  }
+
+  /** Kapat / aç arasında geçiş yapar */
+  function toggleDay(date) {
+    if (isLocked(date)) return reopenDay(date);
+    return closeDay(date);
+  }
 
   function renderCash() {
     const today = api.todayISO();
@@ -607,13 +704,22 @@
     if (status) {
       if (closing) {
         status.innerHTML = `<div class="adm-info"><svg><use href="#i-check"/></svg>
-          <span><strong>${api.fmtDate(cashState.date)}</strong> günü kapatılmış. Bu gün için yeni işlem alınamaz.
-          Değişiklik gerekiyorsa <em>Düzeltme Kaydet</em> ile gerekçeli kayıt tutulur.</span></div>`;
+          <span><strong>${api.fmtDate(cashState.date)}</strong> günü kapatıldı. Bu gün için yeni işlem alınamaz.
+          Aşağıdaki <em>Günü Yeniden Aç</em> düğmesiyle günü tekrar işlem almaya açabilirsiniz.</span></div>`;
       } else {
         status.innerHTML = `<div class="adm-info"><svg><use href="#i-flag"/></svg>
           <span><strong>${api.fmtDate(cashState.date)}</strong> günü henüz kapatılmadı.
           Kasadaki nakit sayılıp girildiğinde gün kapatılabilir.</span></div>`;
       }
+    }
+
+    /* Kapat / yeniden aç düğmesi */
+    const closeBtn = $('#cashCloseBtn');
+    const closeLabel = $('#cashCloseLabel');
+    if (closeBtn && closeLabel) {
+      closeLabel.textContent = closing ? 'Günü Yeniden Aç' : 'Günü Kapat';
+      closeBtn.classList.toggle('adm-btn--primary', !closing);
+      closeBtn.classList.toggle('adm-btn--outline', !!closing);
     }
 
     /* Düzeltme listesi */
@@ -673,10 +779,20 @@
   /* ---- Kapanış / düzeltme işlemleri ---- */
   function saveClosing() {
     const date = cashState.date;
+
+    /* Gün zaten kapatılmışsa düğme "Günü Yeniden Aç" olarak çalışır */
+    if (isLocked(date)) {
+      if (reopenDay(date)) {
+        cashState.actualTouched = false;
+        renderCash();
+      }
+      return;
+    }
+
     const data = cashOf(date);
     const actualCash = toKurus($('#cashActualCash').value);
     const note = ($('#cashNote').value || '').trim();
-    const existing = closingFor(date);
+    const existing = closingRecord(date);
 
     if (!String($('#cashActualCash').value || '').trim()) {
       toast('Kasadaki nakit girilmeden gün kapatılamaz.', 'err');
@@ -695,35 +811,29 @@
       paidToMastersKurus: data.paid,
       note,
       closedAt: new Date().toISOString(),
+      reopened: false,
       corrections: existing ? (existing.corrections || []) : []
     };
 
     const closings = getClosings();
     if (existing) {
-      /* Kapatılmış günün değiştirilmesi — sessizce olmaz, gerekçe istenir */
-      const reason = prompt(
-        `${api.fmtDate(date)} günü zaten kapatılmış.\nKapanış kaydı değiştirilecek, düzeltme olarak gerekçeli kaydedilecek.\n\nGerekçe:`,
-        ''
-      );
-      if (!reason || !reason.trim()) {
-        toast('Düzeltme gerekçesi girilmedi, işlem iptal edildi.', 'err');
-        return;
-      }
+      /* Daha önce kapatılıp yeniden açılmış bir gün — tekrar kapanıyor */
       payload.corrections.push({
         ts: new Date().toISOString(),
         action: 'Kapanış kaydı güncellendi',
         detail: `Sistemdeki nakit ${fmtKurus(data.cash)} → Kasadaki nakit ${fmtKurus(actualCash)}`,
-        reason: reason.trim(),
+        reason: 'Kasa bölümünden yeniden kapatıldı',
         by: 'Yönetici'
       });
       const idx = closings.findIndex((c) => c.id === existing.id);
       closings[idx] = payload;
-      toast('Kapanış düzeltme kaydı ile güncellendi');
+      toast('Kapanış kaydı güncellendi');
     } else {
       closings.push(payload);
       toast('Gün kapatıldı');
     }
     saveClosings(closings);
+    syncLegacyClosed(date, true);
     cashState.actualTouched = true;
     renderCash();
   }
@@ -942,10 +1052,17 @@
   ------------------------------------------------------------------ */
   window.BerberPay = {
     isLockedDate: (date) => isLocked(date),
+    isDayClosed: (date) => isLocked(date),
+    reopenDay,
+    closeDay,
+    toggleDay,
     checkTransactionAllowed: () => {
       const today = api.todayISO();
       if (isLocked(today)) {
-        return { ok: false, reason: `${api.fmtDate(today)} günü kasa kapanışı yapıldığı için yeni işlem alınamaz. Kasa bölümünden düzeltme kaydı oluşturabilirsiniz.` };
+        return {
+          ok: false,
+          reason: `${api.fmtDate(today)} günü kapatıldığı için yeni işlem alınamaz. Aşağıdaki "Günü Yeniden Aç" düğmesiyle günü tekrar açabilirsiniz.`
+        };
       }
       return { ok: true };
     },

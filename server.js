@@ -333,10 +333,13 @@ function serveStatic(req, res, pathname) {
       return res.end('<h1>404</h1><p>Sayfa bulunamadı.</p>');
     }
     const ext = path.extname(target).toLowerCase();
+    /* Uygulama dosyaları (html/css/js/json) asla cache'lenmez — güncellemeler
+       sayfa yenilendiğinde anında görülür. Görseller/fontlar cache'lenebilir. */
+    const cacheable = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2'].includes(ext);
     res.writeHead(200, {
       'Content-Type': MIME[ext] || 'application/octet-stream',
       'Content-Length': stat.size,
-      'Cache-Control': 'no-cache'
+      'Cache-Control': cacheable ? 'public, max-age=86400' : 'no-store, must-revalidate'
     });
     fs.createReadStream(target).pipe(res);
   });

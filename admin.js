@@ -392,9 +392,30 @@
 
   function renderDayStatus() {
     const el = $('#dayStatus');
-    const closed = getClosedDays().includes(todayISO());
+    const today = todayISO();
+    const closed = (window.BerberPay && window.BerberPay.isDayClosed)
+      ? window.BerberPay.isDayClosed(today)
+      : getClosedDays().includes(today);
+
     el.classList.toggle('is-closed', closed);
-    el.textContent = closed ? '⚑ Bugün için gün sonu yapıldı' : '';
+    el.innerHTML = closed
+      ? `⚑ Bugün (${fmtDate(today)}) kapatıldı — yeni işlem alınamaz.
+         <button type="button" class="adm-daystatus__btn" id="reopenDayBtn">Günü Yeniden Aç</button>`
+      : '';
+  }
+
+  /* Kapatılan günü POS ekranından yeniden açma düğmesi */
+  const dayStatusEl = $('#dayStatus');
+  if (dayStatusEl) {
+    dayStatusEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('#reopenDayBtn');
+      if (!btn) return;
+      if (!window.BerberPay || !window.BerberPay.reopenDay) return;
+      btn.disabled = true;
+      const ok = window.BerberPay.reopenDay(todayISO());
+      btn.disabled = false;
+      if (ok) { renderDayStatus(); renderDoneList(); }
+    });
   }
 
   /* ==================================================================
@@ -800,7 +821,9 @@
     const date = $('#dayEndDate').value || todayISO();
     const jobs = jobsOfDate(date);
     const d = reportData(jobs);
-    const closed = getClosedDays().includes(date);
+    const closed = (window.BerberPay && window.BerberPay.isDayClosed)
+      ? window.BerberPay.isDayClosed(date)
+      : getClosedDays().includes(date);
 
     let html = '';
 
@@ -872,13 +895,17 @@
 
   $('#dayEndToggle').addEventListener('click', () => {
     const date = $('#dayEndDate').value || todayISO();
-    const list = getClosedDays();
-    const i = list.indexOf(date);
-    if (i > -1) list.splice(i, 1); else list.push(date);
-    saveClosedDays(list);
+    if (window.BerberPay && window.BerberPay.toggleDay) {
+      window.BerberPay.toggleDay(date);
+    } else {
+      const list = getClosedDays();
+      const i = list.indexOf(date);
+      if (i > -1) list.splice(i, 1); else list.push(date);
+      saveClosedDays(list);
+      toast(i > -1 ? 'Gün yeniden açıldı' : 'Gün sonu yapıldı');
+    }
     renderDayEnd();
     renderDayStatus();
-    toast(i > -1 ? 'Gün yeniden açıldı' : 'Gün sonu yapıldı');
   });
 
   $('#dayEndCsv').addEventListener('click', () => {
@@ -1597,6 +1624,7 @@
   ------------------------------------------------------------------ */
   window.BerberPanel = {
     getJobs, saveJobs, getSvcs, getMasters,
+    getClosedDays, saveClosedDays,
     money, toast, escapeHtml, todayISO, fmtDate, fmtDateLong,
     svcPrice, servicesOf, switchView, initials
   };

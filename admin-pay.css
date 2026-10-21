@@ -119,6 +119,21 @@
 .adm-diffbox--short strong { color: var(--danger); }
 .adm-diffbox--over { background: rgba(37,99,235,.08); border-color: rgba(37,99,235,.26); }
 .adm-diffbox--over strong { color: #2563eb; }
+.adm-diffbox--idle { background: var(--surface-2); border-style: dashed; }
+.adm-diffbox--idle strong { color: var(--faint); }
+
+/* ---------- Alan ipucu ---------- */
+.adm-field__hint {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 5px;
+}
+.adm-field__hint strong { color: var(--text-2); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Büyük tutar alanı ---------- */
+.adm-field--amount input {
+  font-size: 22px; font-weight: 700; letter-spacing: -.02em;
+  padding: 13px 15px; font-variant-numeric: tabular-nums;
+}
 
 /* ---------- Kapanış satırı ---------- */
 .adm-closing {

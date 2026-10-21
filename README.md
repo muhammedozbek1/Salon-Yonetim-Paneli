@@ -142,9 +142,10 @@ PIN sunucuda **scrypt + tuz** ile saklanır; tüm cihazlarda aynı geçerlidir.
 - **Usta Hesapları** — Günlük/haftalık/aylık/özel aralık dönem seçimi; işlem sayısı, ciro,
   usta hak edişi, dükkan payı, ödenen ve kalan bakiye. Usta detayında işlem listesi
   (tarih, hizmet, ücret, uygulanan oran, usta payı) ve usta ödemesi kaydı (tarih, tutar, not).
-- **Kasa** — Nakit/kart cirosu, toplam ciro, ustalara ödenen; gün sonu kapanışında beklenen
-  nakit ile kasadaki gerçek nakit karşılaştırılır, fark (fazla/eksik) ve not gösterilir.
-  Kapatılan gün kilitlenir; sonradan değişiklik gerekçeli **düzeltme kaydı** ile yapılır.
+- **Kasa** — Seçili günün özeti (günün ciro, nakit, kart, ustalara ödenen), günün
+  işlem dökümü ve **günü kapatma**: kasadaki nakit sayılıp girilir, sistemde kayıtlı
+  nakitle karşılaştırılır, fark (fazla / eksik / fark yok) gösterilir. Not ve gerekçe
+  ile kapanış; kapatılan gün kilitlenir, sonradan değişiklik **düzeltme kaydı** ile yapılır.
 - **Pay Ayarları** — Varsayılan pay oranı, usta başına oran, hizmet bazlı istisna
   (usta + hizmet) ve oran değişiklik geçmişi (kim, ne zaman, eski → yeni).
 - **Ayarlar** — Hizmet adı/fiyat düzenleme, usta yönetimi, **PIN kodu** (Mali İşlemler

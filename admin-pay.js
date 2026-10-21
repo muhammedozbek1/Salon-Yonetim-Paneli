@@ -541,10 +541,12 @@
     const data = cashOf(cashState.date);
     const closing = closingFor(cashState.date);
 
+    /* Özet kartları */
+    setText('#cashTotalAmount', fmtKurus(data.total));
     setText('#cashCashAmount', fmtKurus(data.cash));
     setText('#cashCardAmount', fmtKurus(data.card));
-    setText('#cashTotalAmount', fmtKurus(data.total));
     setText('#cashPaidAmount', fmtKurus(data.paid));
+    setText('#cashJobCount', `${data.jobs.length} işlem · ${api.fmtDate(cashState.date)}`);
     setText('#cashDayLabel', api.fmtDate(cashState.date));
 
     /* Günün işlem dökümü */
@@ -570,41 +572,34 @@
         });
     }
 
-    /* Beklenen / gerçek / fark */
-    setText('#cashExpectedCash', fmtKurus(data.cash));
-    setText('#cashExpectedCard', fmtKurus(data.card));
-    setText('#cashExpectedTotal', fmtKurus(data.total));
+    /* Sayılan nakit ↔ sistemdeki nakit */
+    setText('#cashSystemCash', fmtKurus(data.cash));
 
     const actualCashInput = $('#cashActualCash');
-    const actualCardInput = $('#cashActualCard');
     const noteInput = $('#cashNote');
-    if (actualCashInput && actualCardInput) {
+    if (actualCashInput) {
       if (!cashState.actualTouched) {
         /* Kullanıcı alana dokunmadıysa kayıtlı kapanıştan doldur */
         actualCashInput.value = closing ? fromKurus(closing.actualCashKurus) : '';
-        actualCardInput.value = closing ? fromKurus(closing.actualCardKurus) : '';
         if (noteInput) noteInput.value = closing ? (closing.note || '') : '';
       }
     }
 
     const actualCash = toKurus(actualCashInput ? actualCashInput.value : 0);
-    const actualCard = toKurus(actualCardInput ? actualCardInput.value : 0);
     const diffCash = actualCash - data.cash;
-    const diffCard = actualCard - data.card;
 
     const diffBox = $('#cashDiff');
     if (diffBox) {
-      const cls = diffCash === 0 ? 'adm-diffbox--ok' : diffCash < 0 ? 'adm-diffbox--short' : 'adm-diffbox--over';
-      const label = diffCash === 0 ? 'Kasa dengede' : diffCash < 0 ? 'Kasa eksik' : 'Kasa fazla';
-      diffBox.className = `adm-diffbox ${cls}`;
-      diffBox.innerHTML = `<span>${label} (nakit farkı)</span><strong>${fmtKurus(Math.abs(diffCash))}</strong>`;
-    }
-    const diffCardBox = $('#cashDiffCard');
-    if (diffCardBox) {
-      const cls = diffCard === 0 ? 'adm-diffbox--ok' : diffCard < 0 ? 'adm-diffbox--short' : 'adm-diffbox--over';
-      const label = diffCard === 0 ? 'Kart dengede' : diffCard < 0 ? 'Kart eksik' : 'Kart fazla';
-      diffCardBox.className = `adm-diffbox ${cls}`;
-      diffCardBox.innerHTML = `<span>${label}</span><strong>${fmtKurus(Math.abs(diffCard))}</strong>`;
+      const filled = actualCashInput && String(actualCashInput.value).trim() !== '';
+      if (!filled) {
+        diffBox.className = 'adm-diffbox adm-diffbox--idle';
+        diffBox.innerHTML = '<span>Kasayı sayın</span><strong>—</strong>';
+      } else {
+        const cls = diffCash === 0 ? 'adm-diffbox--ok' : diffCash < 0 ? 'adm-diffbox--short' : 'adm-diffbox--over';
+        const label = diffCash === 0 ? 'Fark yok' : diffCash < 0 ? 'Kasada eksik' : 'Kasada fazla';
+        diffBox.className = `adm-diffbox ${cls}`;
+        diffBox.innerHTML = `<span>${label}</span><strong>${fmtKurus(Math.abs(diffCash))}</strong>`;
+      }
     }
 
     /* Kapanış durumu */
@@ -616,8 +611,8 @@
           Değişiklik gerekiyorsa <em>Düzeltme Kaydet</em> ile gerekçeli kayıt tutulur.</span></div>`;
       } else {
         status.innerHTML = `<div class="adm-info"><svg><use href="#i-flag"/></svg>
-          <span><strong>${api.fmtDate(cashState.date)}</strong> günü henüz kapatılmadı. Beklenen nakit
-          <strong>${fmtKurus(data.cash)}</strong> · kasadaki gerçek nakit girilip kapatılabilir.</span></div>`;
+          <span><strong>${api.fmtDate(cashState.date)}</strong> günü henüz kapatılmadı.
+          Kasadaki nakit sayılıp girildiğinde gün kapatılabilir.</span></div>`;
       }
     }
 
@@ -661,10 +656,9 @@
           <span class="adm-closing__date">${api.fmtDate(c.date)}</span>
           <span class="adm-navitem__badge" style="margin-left:0">${label}</span>
           <div class="adm-closing__nums">
-            <span class="adm-closing__num"><span>Beklenen Nakit</span><strong>${fmtKurus(c.expectedCashKurus)}</strong></span>
-            <span class="adm-closing__num"><span>Gerçek Nakit</span><strong>${fmtKurus(c.actualCashKurus)}</strong></span>
+            <span class="adm-closing__num"><span>Sistem</span><strong>${fmtKurus(c.expectedCashKurus)}</strong></span>
+            <span class="adm-closing__num"><span>Kasada</span><strong>${fmtKurus(c.actualCashKurus)}</strong></span>
             <span class="adm-closing__num"><span>Fark</span><strong>${fmtKurus(Math.abs(diff))}</strong></span>
-            <span class="adm-closing__num"><span>Kart</span><strong>${fmtKurus(c.actualCardKurus)}</strong></span>
             <span class="adm-closing__num"><span>Ustalara</span><strong>${fmtKurus(c.paidToMastersKurus)}</strong></span>
           </div>
           ${c.note ? `<span class="adm-muted" style="font-size:12px">${api.escapeHtml(c.note)}</span>` : ''}
@@ -681,9 +675,13 @@
     const date = cashState.date;
     const data = cashOf(date);
     const actualCash = toKurus($('#cashActualCash').value);
-    const actualCard = toKurus($('#cashActualCard').value);
     const note = ($('#cashNote').value || '').trim();
     const existing = closingFor(date);
+
+    if (!String($('#cashActualCash').value || '').trim()) {
+      toast('Kasadaki nakit girilmeden gün kapatılamaz.', 'err');
+      return;
+    }
 
     const payload = {
       id: existing ? existing.id : uid('C'),
@@ -692,7 +690,7 @@
       expectedCardKurus: data.card,
       expectedTotalKurus: data.total,
       actualCashKurus: actualCash,
-      actualCardKurus: actualCard,
+      actualCardKurus: 0,
       differenceKurus: actualCash - data.cash,
       paidToMastersKurus: data.paid,
       note,
@@ -714,7 +712,7 @@
       payload.corrections.push({
         ts: new Date().toISOString(),
         action: 'Kapanış kaydı güncellendi',
-        detail: `Beklenen nakit ${fmtKurus(data.cash)} → Gerçek nakit ${fmtKurus(actualCash)}`,
+        detail: `Sistemdeki nakit ${fmtKurus(data.cash)} → Kasadaki nakit ${fmtKurus(actualCash)}`,
         reason: reason.trim(),
         by: 'Yönetici'
       });
@@ -723,7 +721,7 @@
       toast('Kapanış düzeltme kaydı ile güncellendi');
     } else {
       closings.push(payload);
-      toast('Gün sonu kapatıldı');
+      toast('Gün kapatıldı');
     }
     saveClosings(closings);
     cashState.actualTouched = true;
@@ -911,9 +909,7 @@
     });
 
     const actualCash = $('#cashActualCash');
-    const actualCard = $('#cashActualCard');
     if (actualCash) actualCash.addEventListener('input', () => { cashState.actualTouched = true; renderCash(); });
-    if (actualCard) actualCard.addEventListener('input', () => { cashState.actualTouched = true; renderCash(); });
 
     const closeBtn = $('#cashCloseBtn');
     if (closeBtn) closeBtn.addEventListener('click', saveClosing);

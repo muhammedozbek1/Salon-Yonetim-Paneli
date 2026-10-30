@@ -1,0 +1,139 @@
+/* Admin Anasayfa — sıcak krem minimal */
+.adm-home-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; gap: 12px;
+}
+.adm-home-title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 34px; font-weight: 700; letter-spacing: -.02em;
+  margin: 0; color: var(--text);
+}
+.adm-home-actions { display: flex; align-items: center; gap: 10px; }
+.adm-home-actions .adm-iconbtn {
+  width: 40px; height: 40px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--card);
+  color: var(--text-muted);
+}
+.adm-home-actions .adm-iconbtn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+/* Usta Hesapları kartı */
+.adm-home-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 2px 10px rgba(60,80,55,.08);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.adm-home-card__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.adm-home-card__title {
+  font-size: 16px; font-weight: 600; color: var(--text); margin: 0;
+}
+.adm-home-card__count {
+  min-width: 28px; height: 28px; padding: 0 10px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 13px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.adm-home-masters { display: flex; flex-direction: column; gap: 8px; }
+.adm-home-master {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 14px;
+  background: var(--bg-soft);
+  border: none; width: 100%; text-align: left;
+  font-family: inherit; cursor: pointer;
+  min-height: 44px;
+  transition: background .16s, transform .1s;
+}
+.adm-home-master:active { transform: scale(.99); }
+.adm-home-master:hover { background: var(--accent-soft); }
+.adm-home-master__icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--accent-soft);
+  display: grid; place-items: center; flex-shrink: 0;
+  color: var(--accent);
+}
+.adm-home-master__icon svg { width: 20px; height: 20px; }
+.adm-home-master__name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+.adm-home-master__arrow { color: var(--text-muted); width: 18px; height: 18px; }
+.adm-home-empty { padding: 24px 8px; font-size: 13px; color: var(--text-muted); text-align: center; }
+
+/* Gün Özeti kartları */
+.adm-home-summary {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.adm-home-summary__card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 2px 10px rgba(60,80,55,.08);
+  padding: 20px;
+  min-height: 150px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.adm-home-summary__label {
+  font-size: 12px; font-weight: 600; letter-spacing: .04em;
+  color: var(--text-muted); text-transform: uppercase;
+}
+.adm-home-summary__value {
+  font-size: 40px; font-weight: 700; letter-spacing: -.03em;
+  color: var(--text); line-height: 1.1; margin: 8px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.adm-home-summary__sub {
+  font-size: 12px; color: var(--text-muted);
+}
+.adm-home-summary__iconbox {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; align-self: flex-end;
+}
+.adm-home-summary__iconbox svg { width: 22px; height: 22px; }
+
+/* Net durum halka */
+.adm-home-ring {
+  display: flex; align-items: center; gap: 16px;
+}
+.adm-home-ring__svg { width: 96px; height: 96px; flex-shrink: 0; }
+.adm-home-ring__center {
+  font-size: 22px; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.adm-home-ring__lines { display: flex; flex-direction: column; gap: 6px; }
+.adm-home-ring__line {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-muted);
+}
+.adm-home-ring__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.adm-home-ring__dot--accent { background: var(--accent); }
+.adm-home-ring__dot--soft { background: var(--accent-soft); border: 1px solid var(--border); }
+
+/* skeleton */
+.adm-home-skeleton {
+  background: linear-gradient(90deg, var(--bg-soft), var(--card), var(--bg-soft));
+  background-size: 200% 100%;
+  animation: admHomeShimmer 1.4s ease infinite;
+  border-radius: 12px;
+}
+@keyframes admHomeShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* empty/error */
+.adm-home-state {
+  padding: 18px 8px; font-size: 13px; color: var(--text-muted); text-align: center;
+}
+
+@media (max-width: 900px) {
+  .adm-home-summary { grid-template-columns: 1fr; }
+  .adm-home-title { font-size: 26px; }
+}
+@media (max-width: 600px) {
+  .adm-home-ring { flex-direction: column; align-items: flex-start; }
+}

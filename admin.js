@@ -102,6 +102,7 @@
      GÖRÜNÜMLER (view yönetimi)
   ================================================================== */
   const VIEW_META = {
+    home: { title: 'Yönetim Paneli', sub: 'Gün özeti ve usta hesapları.' },
     pos: { title: 'Yeni İşlem', sub: 'Hizmeti seçin, usta atayın ve işlemi tek adımda kaydedin.' },
     appointments: { title: 'Randevular', sub: 'Müşterilerin site üzerinden aldığı online randevular.' },
     history: { title: 'İş Geçmişi', sub: 'Kayıtlı tüm işlemleri filtreleyin, inceleyin ve raporlayın.' },
@@ -137,7 +138,10 @@
     const meta = VIEW_META[name] || VIEW_META.pos;
     $('#admPageTitle').textContent = meta.title;
     $('#admPageSub').textContent = meta.sub;
+    const pagebar = $('.adm-pagebar');
+    if (pagebar) pagebar.style.display = (name === 'home') ? 'none' : '';
     $('.adm-content').scrollTop = 0;
+    if (name === 'home') renderHome();
     if (name === 'history') renderJobs();
     if (name === 'finance') renderFinance();
     if (name === 'settings') renderSettings();
@@ -161,6 +165,79 @@
   /* ==================================================================
      KPI / İstatistik
   ================================================================== */
+  /* ==================================================================
+      ANASAYFA
+  ================================================================== */
+  function renderHome() {
+    const masters = getMasters();
+    const countEl = $('#homeMasterCount');
+    if (countEl) countEl.textContent = masters.length;
+    const list = $('#homeMastersList');
+    if (list) {
+      if (!masters.length) {
+        list.innerHTML = '<div class="adm-home-empty">Aktif usta bulunamadı.</div>';
+      } else {
+        list.innerHTML = masters.map((m) => `
+          <button type="button" class="adm-home-master" data-master="${escapeHtml(m)}">
+            <span class="adm-home-master__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 19.5c0-3.2 3-5 7-5s7 1.8 7 5"/></svg>
+            </span>
+            <span class="adm-home-master__name">${escapeHtml(m)}</span>
+            <svg class="adm-home-master__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>`).join('');
+
+        list.querySelectorAll('.adm-home-master').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const name = btn.dataset.master;
+            switchView('masters');
+            const sel = $('#masterSelect');
+            if (sel) {
+              sel.value = name;
+              sel.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+        });
+      }
+    }
+
+    const jobs = getJobs();
+    const today = todayISO();
+    const todayJobs = jobs.filter((j) => j.date === today);
+
+    const revEl = $('#homeDayRevenue');
+    if (revEl) revEl.textContent = money(sum(todayJobs));
+    const metaEl = $('#homeDayMeta');
+    if (metaEl) metaEl.textContent = 'bugün';
+    const cntEl = $('#homeDayCount');
+    if (cntEl) cntEl.textContent = todayJobs.length;
+
+    // Net durum: nakit vs kart halka grafiği
+    let cash = 0, card = 0;
+    todayJobs.forEach((j) => {
+      const pm = j.paymentMethod || 'cash';
+      if (pm === 'card') card += (j.amount || 0); else cash += (j.amount || 0);
+    });
+    const total = cash + card;
+    const pct = total > 0 ? Math.round((cash / total) * 100) : 0;
+    const arc = $('#homeRingArc');
+    if (arc) {
+      const circumference = 2 * Math.PI * 38;
+      const dash = (pct / 100) * circumference;
+      arc.setAttribute('stroke-dasharray', `${dash} ${circumference - dash}`);
+    }
+    const pctEl = $('#homeRingPct');
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    const l1 = $('#homeRingLine1');
+    if (l1) l1.textContent = `Nakit ${money(cash)}`;
+    const l2 = $('#homeRingLine2');
+    if (l2) l2.textContent = `Kart ${money(card)}`;
+    const l3 = $('#homeRingLine3');
+    if (l3) {
+      if (total === 0) l3.textContent = 'Bugün henüz işlem yok';
+      else l3.textContent = `Toplam ${money(total)}`;
+    }
+  }
+
   function renderStats() {
     const jobs = getJobs();
     const today = todayISO();
@@ -1162,9 +1239,9 @@
   ================================================================== */
   const R = {
     W: 1240, H: 1754, M: 64,
-    ink: '#14161a', ink2: '#4a5160', muted: '#8b93a1', line: '#e5e7ec',
-    gold: '#b1892b', gold2: '#d8b04a', goldDeep: '#8f6c1c',
-    goldSoft: '#fdf7e9', surface2: '#f7f8fa', danger: '#d92d20'
+    ink: '#F4F1EA', ink2: '#C9C4B8', muted: '#9A958B', line: '#2A2A2E',
+    gold: '#D4A857', gold2: '#E0B96B', goldDeep: '#B88A3A',
+    goldSoft: '#222225', surface2: '#222225', danger: '#E26D5C'
   };
   const FONT = (w, s) => `${w} ${s}px Inter, "Segoe UI", sans-serif`;
   const SERIF = (w, s) => `${w} ${s}px "Playfair Display", Georgia, serif`;
@@ -1684,6 +1761,49 @@
   const session = await S.requireAuth();
   if (!session) return;
 
+  /* Rol bazlı guard: usta buraya giremez */
+  const role = (S.user && S.user.role) || '';
+  const isAdmin = role === 'owner' || role === 'admin';
+  if (!isAdmin) {
+    location.replace('/usta/');
+    return;
+  }
+
+  const homeLogout = $('#homeLogoutBtn');
+  if (homeLogout) homeLogout.addEventListener('click', async () => {
+    if (!confirm('Çıkış yapmak istiyor musunuz?')) return;
+    await S.logout();
+    if (window.BerberPin) window.BerberPin.lock();
+    location.href = S.loginUrl();
+  });
+  const homeNotif = $('#homeNotificationsBtn');
+  if (homeNotif) homeNotif.addEventListener('click', () => { alert('Bildirim yok'); });
+
+  function applyTheme(theme) {
+    if (theme !== 'light' && theme !== 'dark') theme = 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('theme', theme); } catch (e) { /* yoksay */ }
+    const isDark = theme === 'dark';
+    const moonSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+    const sunSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+    document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+      btn.setAttribute('aria-label', isDark ? 'Açık moda geç' : 'Karanlık moda geç');
+      btn.innerHTML = isDark ? sunSvg : moonSvg;
+    });
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (bg) meta.content = bg;
+    }
+  }
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      applyTheme(cur === 'dark' ? 'light' : 'dark');
+    });
+  });
+  applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
+
   const siteInfo = S.site;
   if (siteInfo && siteInfo.name) {
     const brandName = document.querySelector('.adm-side__brandtext strong');
@@ -1694,6 +1814,7 @@
   document.title = `${siteInfo ? siteInfo.name : 'Beyaz Kuaför'} — Yönetim Paneli`;
 
   renderStats();
+  renderHome();
   renderServices();
   renderMasters();
   renderExtras();
@@ -1705,11 +1826,15 @@
 
   const initialView = location.hash.replace('#', '');
   if (VIEW_META[initialView]) switchView(initialView, true);
+  else switchView('home', true);
+
+  window.BerberPanel = { switchView };
 
   /* --- Başka cihazda yapılan değişiklikler --- */
   S.onChange((keys) => {
     if (!keys || !keys.length) return;
     renderStats();
+    renderHome();
     if (currentView === 'pos') { renderDoneList(); renderDayStatus(); renderSummary(); }
     if (currentView === 'history') renderJobs();
     if (currentView === 'finance') renderFinance();

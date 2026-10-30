@@ -8,8 +8,8 @@
   place-items: center;
   padding: 32px 20px;
   background:
-    radial-gradient(900px 500px at 50% -10%, rgba(212, 175, 55, 0.14), transparent 65%),
-    radial-gradient(700px 420px at 100% 100%, rgba(212, 175, 55, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 50% -10%, rgba(212, 168, 87, 0.14), transparent 65%),
+    radial-gradient(700px 420px at 100% 100%, rgba(212, 168, 87, 0.07), transparent 60%),
     var(--bg);
 }
 
@@ -78,7 +78,7 @@
 .lg-field input:focus,
 .lg-field select:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.16);
+  box-shadow: 0 0 0 3px rgba(212, 168, 87, 0.16);
 }
 
 .lg-field select { appearance: none; cursor: pointer; }

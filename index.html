@@ -321,5 +321,16 @@
   <script src="store.js"></script>
   <script src="site-loader.js"></script>
   <script src="script.js"></script>
+  <script>
+    (function () {
+      if (!window.BerberStore) return;
+      window.BerberStore.me().then(function (info) {
+        if (!info) return;
+        var role = (info.user && info.user.role) || '';
+        var isAdmin = role === 'owner' || role === 'admin';
+        location.replace(isAdmin ? '/admin/' : '/usta/');
+      }).catch(function () {});
+    })();
+  </script>
 </body>
 </html>

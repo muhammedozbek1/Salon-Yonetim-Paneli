@@ -240,7 +240,7 @@
 
   function loginUrl() {
     const next = encodeURIComponent(location.pathname + location.search);
-    return `login.html?site=${encodeURIComponent(siteId)}&next=${next}`;
+    return `/login.html?site=${encodeURIComponent(siteId)}&next=${next}`;
   }
 
   function redirectToLogin() {

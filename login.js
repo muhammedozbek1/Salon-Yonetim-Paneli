@@ -18,7 +18,7 @@
 
   const params = new URLSearchParams(location.search);
   const wantedSite = params.get('site') || store.siteId || 'beyaz';
-  const next = params.get('next') || 'admin.html';
+  const next = params.get('next') || '';
 
   let sites = [];
 
@@ -109,9 +109,12 @@
     setLoading(true);
     try {
       await store.login(site, username, password);
-      const target = next && next !== 'admin.html'
+      const role = (store.user && store.user.role) || '';
+      const isAdmin = role === 'owner' || role === 'admin';
+      const defaultPanel = isAdmin ? '/admin/' : '/usta/';
+      const target = next && next !== '' && next !== '/admin/' && next !== '/usta/'
         ? next
-        : `admin.html?site=${encodeURIComponent(site)}`;
+        : `${defaultPanel}?site=${encodeURIComponent(site)}`;
       location.href = target;
     } catch (err) {
       setLoading(false);
@@ -128,7 +131,10 @@
   // Zaten giriş yapılmışsa doğrudan panele
   store.me().then((info) => {
     if (info) {
-      location.replace(next && next !== 'admin.html' ? next : `admin.html?site=${encodeURIComponent(info.site.id)}`);
+      const role = (info.user && info.user.role) || '';
+      const isAdmin = role === 'owner' || role === 'admin';
+      const defaultPanel = isAdmin ? '/admin/' : '/usta/';
+      location.replace(next && next !== '' ? next : `${defaultPanel}?site=${encodeURIComponent(info.site.id)}`);
     }
   }).catch(() => {});
 })();

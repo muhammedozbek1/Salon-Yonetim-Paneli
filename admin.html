@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="admin.css" />
   <link rel="stylesheet" href="admin-pay.css" />
+  <link rel="stylesheet" href="admin-mobile.css" />
 </head>
 <body class="adm-body">
 
@@ -370,7 +371,7 @@
             </div>
 
             <div class="adm-tablewrap">
-              <table class="adm-table">
+              <table class="adm-table adm-table--history">
                 <thead>
                   <tr>
                     <th>Tarih</th>
@@ -601,7 +602,7 @@
           </header>
           <div class="adm-card__body adm-card__body--flush">
             <div class="adm-tablewrap">
-              <table class="adm-table">
+              <table class="adm-table adm-table--masters">
                 <thead>
                   <tr>
                     <th>Usta</th>
@@ -634,7 +635,7 @@
           </div>
           <div class="adm-card__body adm-card__body--flush">
             <div class="adm-tablewrap">
-              <table class="adm-table">
+              <table class="adm-table adm-table--history">
                 <thead>
                   <tr>
                     <th>Tarih</th>
@@ -652,7 +653,7 @@
             <p class="adm-label">Usta Ödemesi Kaydet</p>
             <div class="adm-addrow">
               <input type="date" id="paymentDate" aria-label="Ödeme tarihi" />
-              <input type="number" id="paymentAmount" placeholder="Tutar" min="0" step="0.01" />
+              <input type="number" id="paymentAmount" placeholder="Tutar" min="0" step="0.01" inputmode="decimal" />
               <input type="text" id="paymentNote" placeholder="Not (isteğe bağlı)" />
               <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="addPaymentBtn">
                 <svg><use href="#i-check"/></svg> Ödemeyi Kaydet
@@ -745,7 +746,7 @@
             </header>
             <div class="adm-card__body adm-card__body--flush">
               <div class="adm-tablewrap">
-                <table class="adm-table">
+                <table class="adm-table adm-table--kasa">
                   <thead>
                     <tr>
                       <th>Saat</th>
@@ -788,7 +789,7 @@
             <div class="adm-card__body adm-card__body--row">
               <p>Usta, işlem tutarının bu oran kadar payını alır; kalan tutar dükkânın payıdır. Oran kaydedilen her işleme o anki değeriyle snapshot olarak yazılır.</p>
               <label class="adm-rate-input">
-                <input type="number" id="defaultRate" min="0" max="100" step="1" aria-label="Varsayılan pay oranı" />
+                <input type="number" id="defaultRate" min="0" max="100" step="1" inputmode="numeric" aria-label="Varsayılan pay oranı" />
                 <span>%</span>
               </label>
             </div>
@@ -818,7 +819,7 @@
               <div class="adm-addrow">
                 <select class="adm-select" id="srMaster" aria-label="Usta"></select>
                 <select class="adm-select" id="srService" aria-label="Hizmet"></select>
-                <input type="number" id="srRate" min="0" max="100" placeholder="%" style="width:92px;" aria-label="Oran" />
+                <input type="number" id="srRate" min="0" max="100" inputmode="numeric" placeholder="%" style="width:92px;" aria-label="Oran" />
                 <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="addServiceRate">
                   <svg><use href="#i-plus"/></svg> Ekle
                 </button>
@@ -835,7 +836,7 @@
             </header>
             <div class="adm-card__body adm-card__body--flush">
               <div class="adm-tablewrap">
-                <table class="adm-table">
+                <table class="adm-table adm-table--rates">
                   <thead>
                     <tr>
                       <th>Kapsam</th>
@@ -868,7 +869,7 @@
               <div id="svcList" class="adm-svclist"></div>
               <div class="adm-addrow">
                 <input type="text" id="newSvcName" placeholder="Hizmet adı" />
-                <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" />
+                <input type="number" id="newSvcPrice" placeholder="Fiyat" min="0" inputmode="decimal" />
                 <button type="button" class="adm-btn adm-btn--primary adm-btn--sm" id="addSvcBtn">
                   <svg><use href="#i-plus"/></svg> Ekle
                 </button>
@@ -1071,7 +1072,7 @@
       </div>
       <div class="adm-field">
         <label for="qsPrice">Fiyat (₺)</label>
-        <input type="number" id="qsPrice" min="0" placeholder="0" />
+        <input type="number" id="qsPrice" min="0" placeholder="0" inputmode="decimal" />
       </div>
       <div class="adm-modalfoot">
         <button type="button" class="adm-btn adm-btn--ghost" data-close="addSvcModal">Vazgeç</button>
@@ -1140,6 +1141,79 @@
   </div>
 </div>
 
+
+<!-- ================= MOBİL ALT NAV ÇUBUĞU ================= -->
+<nav class="adm-mob-bar" id="admMobBar" aria-label="Alt menü">
+  <button type="button" class="adm-mob-bar__btn is-active" data-view="pos" aria-label="Yeni İşlem">
+    <svg><use href="#i-receipt"/></svg>
+    <span>İşlem</span>
+  </button>
+  <button type="button" class="adm-mob-bar__btn" data-view="appointments" aria-label="Randevular">
+    <svg><use href="#i-cal"/></svg>
+    <span>Randevu</span>
+    <span class="adm-mob-bar__badge" id="mobApptBadge"></span>
+  </button>
+  <button type="button" class="adm-mob-bar__btn" data-view="history" aria-label="İş Geçmişi">
+    <svg><use href="#i-history"/></svg>
+    <span>Geçmiş</span>
+  </button>
+  <button type="button" class="adm-mob-bar__btn" data-view="kasa" aria-label="Kasa">
+    <svg><use href="#i-safe"/></svg>
+    <span>Kasa</span>
+  </button>
+  <button type="button" class="adm-mob-bar__btn adm-mob-bar__btn--menu" id="admMobMenuBtn" aria-label="Menü" aria-expanded="false">
+    <svg><use href="#i-sliders"/></svg>
+    <span>Menü</span>
+  </button>
+</nav>
+
+<!-- ================= MOBİL MENÜ SHEET ================= -->
+<div class="adm-mob-sheet" id="admMobSheet" role="dialog" aria-modal="true" aria-label="Tüm bölümler">
+  <div class="adm-mob-sheet__backdrop" id="admMobBackdrop"></div>
+  <div class="adm-mob-sheet__card">
+    <div class="adm-mob-sheet__handle"></div>
+    <p class="adm-mob-sheet__title">Tüm Bölümler</p>
+    <div class="adm-mob-sheet__grid">
+
+      <button type="button" class="adm-mob-sheet__item" data-view="finance">
+        <div class="adm-mob-sheet__item-icon"><svg><use href="#i-wallet"/></svg></div>
+        <span class="adm-mob-sheet__item-label">Mali İşlemler</span>
+        <span class="adm-mob-sheet__item-sub">Ciro & Raporlar</span>
+      </button>
+
+      <button type="button" class="adm-mob-sheet__item" data-view="masters">
+        <div class="adm-mob-sheet__item-icon"><svg><use href="#i-scale"/></svg></div>
+        <span class="adm-mob-sheet__item-label">Usta Hesapları</span>
+        <span class="adm-mob-sheet__item-sub">Hak ediş & Ödemeler</span>
+      </button>
+
+      <button type="button" class="adm-mob-sheet__item" data-view="pay">
+        <div class="adm-mob-sheet__item-icon"><svg><use href="#i-percent"/></svg></div>
+        <span class="adm-mob-sheet__item-label">Pay Ayarları</span>
+        <span class="adm-mob-sheet__item-sub">Oranlar & İstisnalar</span>
+      </button>
+
+      <button type="button" class="adm-mob-sheet__item" data-view="settings">
+        <div class="adm-mob-sheet__item-icon"><svg><use href="#i-sliders"/></svg></div>
+        <span class="adm-mob-sheet__item-label">Ayarlar</span>
+        <span class="adm-mob-sheet__item-sub">Hizmet & Kullanıcı</span>
+      </button>
+
+    </div>
+    <div class="adm-mob-sheet__sep"></div>
+    <div class="adm-mob-sheet__foot">
+      <a href="index.html" class="adm-mob-sheet__footlink">
+        <svg><use href="#i-external"/></svg> Siteyi Aç
+      </a>
+      <a href="randevu.html" class="adm-mob-sheet__footlink">
+        <svg><use href="#i-cal"/></svg> Randevu Sayfası
+      </a>
+      <button type="button" class="adm-mob-sheet__footlink adm-mob-sheet__footlink--danger" id="mobLogout">
+        <svg><use href="#i-x"/></svg> Çıkış Yap
+      </button>
+    </div>
+  </div>
+</div>
 <div class="adm-toasts" id="admToasts" aria-live="polite"></div>
 
 <script src="store.js"></script>
@@ -1148,5 +1222,180 @@
 <script src="admin-account.js"></script>
 <script src="admin-appointments.js"></script>
 <script src="admin-pin.js"></script>
-</body>
+<script>
+/* ============================================================
+   Mobil Alt Nav + Menü Sheet — Admin Paneli
+   Yalnızca admin.html için; usta sayfalarına dokunulmaz.
+   ============================================================ */
+(function () {
+  'use strict';
+
+  // Yalnızca mobil breakpoint'te aktif olsun
+  // (masaüstünde bar display:none ama JS de çalışmasın diye)
+  const isMob = () => window.innerWidth <= 768;
+
+  /* Alt bar */
+  const bar = document.getElementById('admMobBar');
+  const menuBtn = document.getElementById('admMobMenuBtn');
+  const sheet = document.getElementById('admMobSheet');
+  const backdrop = document.getElementById('admMobBackdrop');
+
+  /* switchView ile senkronize: mobil barın aktif butonunu güncelle */
+  const MOB_BAR_VIEWS = ['pos', 'appointments', 'history', 'kasa'];
+
+  function currentView() {
+    const active = document.querySelector('.adm-navitem.is-active');
+    return (active && active.dataset.view) || location.hash.replace('#', '') || 'pos';
+  }
+
+  /* Sidebar aktif durumu değişince mobil barı senkronize et */
+  const sideNav = document.querySelector('.adm-nav');
+  if (sideNav) {
+    new MutationObserver(() => updateMobBar()).observe(sideNav, {
+      subtree: true, attributes: true, attributeFilter: ['class']
+    });
+  }
+
+  function updateMobBar(view) {
+    if (!bar) return;
+    view = view || currentView();
+    bar.querySelectorAll('.adm-mob-bar__btn[data-view]').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.view === view);
+    });
+    // Menü butonunu: aktif görünüm menüden açıldıysa vurgula
+    if (menuBtn) {
+      const fromMenu = !MOB_BAR_VIEWS.includes(view);
+      menuBtn.classList.toggle('is-active', fromMenu);
+    }
+  }
+
+  /* Rozet güncelle */
+  function updateMobBadge() {
+    const src = document.getElementById('navApptCount');
+    const dest = document.getElementById('mobApptBadge');
+    if (src && dest) dest.textContent = src.textContent === '0' ? '' : src.textContent;
+  }
+
+  /* Alt bar buton tıklamaları */
+  if (bar) {
+    bar.querySelectorAll('.adm-mob-bar__btn[data-view]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (window.BerberPanel && typeof window.BerberPanel.switchView === 'function') {
+          // switchView admin.js'te window.BerberPanel.switchView olarak sarmalı yok,
+          // doğrudan global switchView'ı kullanalım
+        }
+        // switchView global değil; navitem click'i taklit et
+        const view = btn.dataset.view;
+        if (window.BerberPanel && typeof window.BerberPanel.switchView === 'function') {
+          window.BerberPanel.switchView(view);
+        } else {
+          const nb = document.querySelector(`.adm-navitem[data-view="${view}"]`);
+          if (nb) nb.click();
+        }
+        updateMobBar(view);
+      });
+    });
+  }
+
+  /* Menü Sheet */
+  function openSheet() {
+    if (!sheet) return;
+    sheet.classList.remove('is-closing');
+    sheet.classList.add('is-open');
+    if (menuBtn) { menuBtn.classList.add('is-active'); menuBtn.setAttribute('aria-expanded', 'true'); }
+    document.body.style.overflow = 'hidden';
+    // Sheet item'larını aktif görünüme göre işaretle
+    const curView = currentView();
+    sheet.querySelectorAll('.adm-mob-sheet__item[data-view]').forEach(item => {
+      item.classList.toggle('is-active', item.dataset.view === curView);
+    });
+  }
+
+  function closeSheet(cb) {
+    if (!sheet || !sheet.classList.contains('is-open')) { cb && cb(); return; }
+    sheet.classList.add('is-closing');
+    if (menuBtn) { menuBtn.setAttribute('aria-expanded', 'false'); }
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      sheet.classList.remove('is-open', 'is-closing');
+      if (!MOB_BAR_VIEWS.includes(document.querySelector('.adm-view.is-active')?.dataset.view || '')) {
+        // menü içinden bir ekran açıldıysa menü butonu aktif kalır
+      } else {
+        menuBtn && menuBtn.classList.remove('is-active');
+      }
+      cb && cb();
+    }, 220);
+  }
+
+  if (menuBtn) menuBtn.addEventListener('click', () => {
+    sheet && sheet.classList.contains('is-open') ? closeSheet() : openSheet();
+  });
+
+  if (backdrop) backdrop.addEventListener('click', () => closeSheet());
+
+  /* Sheet içi item tıklamaları */
+  if (sheet) {
+    sheet.querySelectorAll('.adm-mob-sheet__item[data-view]').forEach(item => {
+      item.addEventListener('click', () => {
+        const view = item.dataset.view;
+        closeSheet(() => {
+          if (window.BerberPanel && typeof window.BerberPanel.switchView === 'function') {
+            window.BerberPanel.switchView(view);
+          } else {
+            const nb = document.querySelector(`.adm-navitem[data-view="${view}"]`);
+            if (nb) nb.click();
+          }
+          updateMobBar(view);
+          sheet.querySelectorAll('.adm-mob-sheet__item[data-view]').forEach(i => {
+            i.classList.toggle('is-active', i.dataset.view === view);
+          });
+        });
+      });
+    });
+  }
+
+  /* Çıkış butonu (sheet içindeki) */
+  const mobLogout = document.getElementById('mobLogout');
+  if (mobLogout) {
+    mobLogout.addEventListener('click', () => {
+      const sideLogout = document.getElementById('sideLogout');
+      if (sideLogout) sideLogout.click();
+    });
+  }
+
+  /* switchView hook */
+  /* admin.js yüklenince navitem click'lerini dinliyoruz.
+     Sidebar navitem'larına da listener eklendiğinden, tek bir
+     MutationObserver veya hashchange ile senkronize edelim.     */
+  window.addEventListener('hashchange', () => {
+    const v = location.hash.replace('#', '');
+    updateMobBar(v);
+    updateMobBadge();
+  });
+
+  /* İlk yükleme */
+  updateMobBar(currentView());
+
+  /* Rozet: navApptCount değişirse güncelle */
+  const apptCountEl = document.getElementById('navApptCount');
+  if (apptCountEl) {
+    new MutationObserver(updateMobBadge).observe(apptCountEl, { childList: true, characterData: true, subtree: true });
+  }
+  updateMobBadge();
+
+  /* Swipe-down ile sheet kapat */
+  let touchStartY = 0;
+  const card = sheet && sheet.querySelector('.adm-mob-sheet__card');
+  if (card) {
+    card.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+    card.addEventListener('touchend', e => {
+      if (e.changedTouches[0].clientY - touchStartY > 80) closeSheet();
+    }, { passive: true });
+  }
+
+  /* ESC ile kapat */
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+})();
+</script></body>
 </html>

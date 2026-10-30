@@ -296,11 +296,11 @@
             : `${h.master} · ${h.service}`;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="adm-nowrap"><strong>${api.escapeHtml(scope)}</strong></td>
-          <td class="adm-nowrap">${h.oldRate === null ? '—' : '%' + h.oldRate}</td>
-          <td class="adm-nowrap">${h.newRate === null ? '—' : '%' + h.newRate}</td>
-          <td class="adm-nowrap">${api.escapeHtml(h.by || '—')}</td>
-          <td class="adm-nowrap adm-muted">${formatTs(h.ts)}</td>`;
+          <td class="adm-nowrap" data-label="Kapsam"><strong>${api.escapeHtml(scope)}</strong></td>
+          <td class="adm-nowrap" data-label="Eski">${h.oldRate === null ? '—' : '%' + h.oldRate}</td>
+          <td class="adm-nowrap" data-label="Yeni">${h.newRate === null ? '—' : '%' + h.newRate}</td>
+          <td class="adm-nowrap" data-label="Değiştiren">${api.escapeHtml(h.by || '—')}</td>
+          <td class="adm-nowrap adm-muted" data-label="Tarih">${formatTs(h.ts)}</td>`;
         hBody.appendChild(tr);
       });
     }
@@ -414,15 +414,15 @@
       accounts.forEach((a) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>
+          <td data-label="Usta">
             <span class="adm-table__master"><i>${api.escapeHtml(api.initials(a.master))}</i>${api.escapeHtml(a.master)}</span>
           </td>
-          <td class="adm-nowrap">${a.count}</td>
-          <td class="ta-right adm-nowrap"><strong>${fmtKurus(a.ciro)}</strong></td>
-          <td class="ta-right adm-nowrap"><strong>${fmtKurus(a.share)}</strong></td>
-          <td class="ta-right adm-nowrap adm-muted">${fmtKurus(a.shop)}</td>
-          <td class="ta-right adm-nowrap">${fmtKurus(a.paid)}</td>
-          <td class="ta-right adm-nowrap">
+          <td class="adm-nowrap" data-label="İşlem">${a.count}</td>
+          <td class="ta-right adm-nowrap" data-label="Ciro"><strong>${fmtKurus(a.ciro)}</strong></td>
+          <td class="ta-right adm-nowrap" data-label="Usta Payı"><strong>${fmtKurus(a.share)}</strong></td>
+          <td class="ta-right adm-nowrap adm-muted" data-label="Dükkan">${fmtKurus(a.shop)}</td>
+          <td class="ta-right adm-nowrap" data-label="Ödenen">${fmtKurus(a.paid)}</td>
+          <td class="ta-right adm-nowrap" data-label="Kalan">
             <strong style="color:${a.balance > 0 ? 'var(--danger)' : a.balance < 0 ? 'var(--ok)' : 'var(--text)'}">${fmtKurus(a.balance)}</strong>
           </td>`;
         tbody.appendChild(tr);
@@ -475,11 +475,11 @@
       jobs.forEach((j) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="adm-nowrap adm-table__date">${api.fmtDate(j.date)}</td>
-          <td>${api.escapeHtml(j.services.join(' · '))}</td>
-          <td class="ta-right adm-nowrap"><strong>${fmtKurus(j.amountKurus)}</strong></td>
-          <td class="ta-right adm-nowrap"><span class="adm-tag adm-tag--gold">%${j.commissionRate}</span></td>
-          <td class="ta-right adm-nowrap"><strong>${fmtKurus(j.masterShareKurus)}</strong></td>`;
+          <td class="adm-nowrap adm-table__date" data-label="Tarih">${api.fmtDate(j.date)}</td>
+          <td data-label="Hizmetler">${api.escapeHtml(j.services.join(' · '))}</td>
+          <td class="ta-right adm-nowrap" data-label="Ücret"><strong>${fmtKurus(j.amountKurus)}</strong></td>
+          <td class="ta-right adm-nowrap" data-label="Oran"><span class="adm-tag adm-tag--gold">%${j.commissionRate}</span></td>
+          <td class="ta-right adm-nowrap" data-label="Usta Payı"><strong>${fmtKurus(j.masterShareKurus)}</strong></td>`;
         tbody.appendChild(tr);
       });
     }
@@ -660,11 +660,11 @@
           const tr = document.createElement('tr');
           const isCard = j.paymentMethod === 'card';
           tr.innerHTML = `
-            <td class="adm-table__time">${j.time || '—'}</td>
-            <td class="adm-nowrap">${api.escapeHtml(j.master || '—')}</td>
-            <td class="adm-table__svc">${api.escapeHtml(j.services.join(' · '))}</td>
-            <td><span class="adm-tag ${isCard ? 'adm-tag--gold' : 'adm-tag--ok'}">${isCard ? 'Kart' : 'Nakit'}</span></td>
-            <td class="ta-right adm-nowrap"><strong>${fmtKurus(j.amountKurus)}</strong></td>`;
+            <td class="adm-table__time" data-label="Saat">${j.time || '—'}</td>
+            <td class="adm-nowrap" data-label="Usta">${api.escapeHtml(j.master || '—')}</td>
+            <td class="adm-table__svc" data-label="Hizmetler">${api.escapeHtml(j.services.join(' · '))}</td>
+            <td data-label="Tahsilat"><span class="adm-tag ${isCard ? 'adm-tag--gold' : 'adm-tag--ok'}">${isCard ? 'Kart' : 'Nakit'}</span></td>
+            <td class="ta-right adm-nowrap" data-label="Tutar"><strong>${fmtKurus(j.amountKurus)}</strong></td>`;
           jobsBody.appendChild(tr);
         });
     }

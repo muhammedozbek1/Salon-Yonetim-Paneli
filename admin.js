@@ -755,12 +755,12 @@
     filteredJobs.forEach((j) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="adm-table__date">${fmtDate(j.date)}</td>
-        <td class="adm-table__time">${j.time || '—'}</td>
-        <td><span class="adm-table__master"><i>${escapeHtml(initials(j.master))}</i>${escapeHtml(j.master || '—')}</span></td>
-        <td class="adm-table__svc">${escapeHtml(servicesOf(j).join(' · '))}</td>
-        <td class="ta-right"><strong>${money(j.amount)}</strong></td>
-        <td class="ta-center"><button type="button" class="adm-del" title="Sil"><svg><use href="#i-trash"/></svg></button></td>`;
+        <td class="adm-table__date" data-label="Tarih">${fmtDate(j.date)}</td>
+        <td class="adm-table__time" data-label="Saat">${j.time || '—'}</td>
+        <td data-label="Usta"><span class="adm-table__master"><i>${escapeHtml(initials(j.master))}</i>${escapeHtml(j.master || '—')}</span></td>
+        <td class="adm-table__svc" data-label="Hizmetler">${escapeHtml(servicesOf(j).join(' · '))}</td>
+        <td class="ta-right td-amount" data-label="Ücret"><strong>${money(j.amount)}</strong></td>
+        <td class="ta-center" data-label="İşlem"><button type="button" class="adm-del" title="Sil"><svg><use href="#i-trash"/></svg></button></td>`;
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('.adm-del').forEach((btn, i) => {

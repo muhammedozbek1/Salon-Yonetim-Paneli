@@ -1,0 +1,735 @@
+/* ==========================================================================
+   Admin Paneli — Mobil Tasarım (admin.css'i bozmadan sadece bu dosya)
+   Breakpoint: max-width 768px → yönetici telefon görünümü
+   Usta paneline (randevu.html, usta akışları) hiç dokunulmaz.
+   ========================================================================== */
+
+/* ---------- Temel token genişletmeleri ---------- */
+:root {
+  --mob-bar-h: 64px;          /* alt nav bar yüksekliği          */
+  --mob-sheet-radius: 22px;   /* menü sheet yuvarlaklığı         */
+}
+
+/* ==========================================================================
+   Mobil genel düzeltmeler (≤ 768px)
+   ========================================================================== */
+/* Masaustunde mobil bar/sheet gizli (sadece mobilde aktif) */
+.adm-mob-bar,
+.adm-mob-sheet { display: none; }
+
+@media (max-width: 768px) {
+
+  /* body: artık scroll serbest, alt bar için padding bırak */
+  .adm-body {
+    height: auto;
+    overflow: auto;
+    padding-bottom: var(--mob-bar-h);
+  }
+
+  /* Shell: yatay flex → tek sütun */
+  .adm-shell {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  /* ---------- SIDEBAR — tamamen gizle ---------- */
+  .adm-side { display: none !important; }
+
+  /* ---------- MAIN ---------- */
+  .adm-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding-bottom: var(--mob-bar-h);
+  }
+
+  /* ---------- PAGEBAR (üst başlık) ---------- */
+  .adm-pagebar {
+    padding: 12px 16px 10px;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  .adm-pagebar__title h1 {
+    font-size: 18px;
+  }
+  .adm-pagebar__title p { display: none; }
+
+  /* Kullanıcı adını gizle, sadece avatar kalsın */
+  .adm-user__name { display: none; }
+  .adm-user { padding: 4px; border-radius: 50%; }
+
+  /* Saat: sadece rakam, tarih gizle */
+  .adm-clock em { display: none; }
+  .adm-clock { padding: 6px 10px; }
+
+  /* ---------- CONTENT ---------- */
+  .adm-content {
+    flex: 1;
+    padding: 14px 12px 20px;
+    overflow-y: visible;
+    overflow-x: hidden;
+  }
+
+  /* ==========================================================================
+     ALT NAVİGASYON ÇUBUĞU
+     ========================================================================== */
+
+  .adm-mob-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    height: var(--mob-bar-h);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    padding: 0 4px;
+    box-shadow: 0 -4px 20px -6px rgba(16,24,40,.12);
+    /* iOS safe area */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .adm-mob-bar__btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    border: none;
+    background: none;
+    border-radius: 14px;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    transition: color .16s, background .16s;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 44px;
+    position: relative;
+  }
+  .adm-mob-bar__btn svg {
+    width: 22px; height: 22px;
+    flex-shrink: 0;
+    transition: color .16s;
+  }
+  .adm-mob-bar__btn span { line-height: 1; }
+
+  .adm-mob-bar__btn:hover,
+  .adm-mob-bar__btn:active { background: var(--surface-2); }
+
+  .adm-mob-bar__btn.is-active {
+    color: var(--gold);
+  }
+  .adm-mob-bar__btn.is-active::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    width: 32px; height: 3px;
+    border-radius: 999px;
+    background: var(--gold);
+  }
+
+  /* Rozet */
+  .adm-mob-bar__badge {
+    position: absolute;
+    top: 2px; right: calc(50% - 18px);
+    min-width: 16px; height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+  }
+  .adm-mob-bar__badge:empty { display: none; }
+
+  /* Menü butonu özel renk */
+  .adm-mob-bar__btn--menu { color: var(--text-2); }
+  .adm-mob-bar__btn--menu.is-active { color: var(--text); }
+
+  /* ==========================================================================
+     MENÜ SHEET (tüm sekmeler)
+     ========================================================================== */
+
+  .adm-mob-sheet {
+    display: none; /* JS ile is-open eklenir */
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+  .adm-mob-sheet.is-open { display: block; }
+
+  /* yarı saydam arka plan */
+  .adm-mob-sheet__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(14,15,20,.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: mobSheetFadeIn .22s ease both;
+  }
+
+  /* kart */
+  .adm-mob-sheet__card {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: var(--mob-sheet-radius) var(--mob-sheet-radius) 0 0;
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+    animation: mobSheetSlideUp .28s cubic-bezier(.32,1,.5,1) both;
+    max-height: 80dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* tutma çubuğu */
+  .adm-mob-sheet__handle {
+    width: 36px; height: 4px;
+    background: var(--border-strong);
+    border-radius: 999px;
+    margin: 10px auto 0;
+  }
+
+  .adm-mob-sheet__title {
+    padding: 14px 20px 8px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Grid: 2 sütun büyük ikonlu kartlar */
+  .adm-mob-sheet__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 4px 14px 20px;
+  }
+
+  .adm-mob-sheet__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 20px 10px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    transition: background .16s, box-shadow .16s;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 96px;
+    position: relative;
+  }
+  .adm-mob-sheet__item:active { background: var(--gold-soft); }
+  .adm-mob-sheet__item.is-active {
+    background: var(--gold-soft);
+    border: 1.5px solid var(--gold-soft-2);
+    color: var(--gold-deep);
+  }
+
+  .adm-mob-sheet__item-icon {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    background: var(--surface-3);
+    display: grid; place-items: center;
+    transition: background .16s;
+  }
+  .adm-mob-sheet__item.is-active .adm-mob-sheet__item-icon {
+    background: var(--gold-soft-2);
+  }
+  .adm-mob-sheet__item svg { width: 22px; height: 22px; }
+  .adm-mob-sheet__item.is-active svg { color: var(--gold); }
+
+  .adm-mob-sheet__item-label { font-size: 12.5px; font-weight: 700; line-height: 1.2; }
+  .adm-mob-sheet__item-sub { font-size: 10.5px; color: var(--muted); font-weight: 500; }
+
+  /* Separator çizgisi ve Çıkış butonu */
+  .adm-mob-sheet__sep {
+    height: 1px;
+    background: var(--border);
+    margin: 0 14px;
+  }
+  .adm-mob-sheet__foot {
+    padding: 12px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .adm-mob-sheet__footlink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .15s, color .15s;
+  }
+  .adm-mob-sheet__footlink:active { background: var(--surface-2); }
+  .adm-mob-sheet__footlink svg { width: 18px; height: 18px; color: var(--muted); }
+  .adm-mob-sheet__footlink--danger { color: var(--danger); }
+  .adm-mob-sheet__footlink--danger svg { color: var(--danger); }
+
+  @keyframes mobSheetFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes mobSheetSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* Kapanma animasyonu */
+  .adm-mob-sheet.is-closing .adm-mob-sheet__backdrop {
+    animation: mobSheetFadeOut .2s ease both;
+  }
+  .adm-mob-sheet.is-closing .adm-mob-sheet__card {
+    animation: mobSheetSlideDown .22s cubic-bezier(.5,0,.68,.28) both;
+  }
+  @keyframes mobSheetFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes mobSheetSlideDown {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+  }
+
+  /* ==========================================================================
+     KPI KARTLAR — mobilde tek sütun veya 2li grid
+     ========================================================================== */
+  .adm-kpis,
+  .adm-kpis--3,
+  .adm-report__kpis {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .adm-kpi {
+    padding: 14px 14px 12px;
+  }
+  .adm-kpi__value { font-size: 20px; }
+
+  /* ==========================================================================
+     YENİ İŞLEM (POS) — tek sütun
+     ========================================================================== */
+  .adm-pos {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px;
+  }
+  .adm-pos__col:last-child { grid-column: span 1 !important; }
+
+  /* Hizmet butonları: 2 sütun, büyük dokunma alanı */
+  .adm-svcgrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .adm-svc {
+    padding: 14px 10px;
+    min-height: 68px;
+  }
+  .adm-svc__name { font-size: 13px; }
+
+  /* Usta grid: sarmal, büyük butonlar */
+  .adm-mastergrid {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .adm-master {
+    min-height: 54px;
+    padding: 10px 14px;
+  }
+
+  /* Tutar adım butonları: büyük */
+  .adm-amountsteps { gap: 8px; }
+  .adm-stepbtn { min-height: 48px; font-size: 15px; }
+
+  /* Tamamla butonu: büyük */
+  .adm-btn--lg { min-height: 54px; font-size: 16px; }
+
+  /* ==========================================================================
+     TABLOLAR → KART LİSTESİ
+     Mobilde her satır kart görünümüne dönüşür.
+     ========================================================================== */
+
+  /* Tablo sarıcı: x-scroll yerine kart modu */
+  .adm-tablewrap { overflow-x: visible; }
+
+  /* İş Geçmişi tablosu → kart */
+  .adm-table.adm-table--history thead { display: none; }
+  .adm-table.adm-table--history,
+  .adm-table.adm-table--history tbody,
+  .adm-table.adm-table--history tr { display: block; }
+  .adm-table.adm-table--history tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    padding: 0;
+    overflow: hidden;
+  }
+  .adm-table.adm-table--history tr:hover { background: var(--surface-2); }
+  .adm-table.adm-table--history td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .adm-table.adm-table--history td:last-child { border-bottom: none; }
+  .adm-table.adm-table--history td::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+  /* Tutar: vurgulu */
+  .adm-table.adm-table--history td.td-amount {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  /* Kasa günlük işlemler tablosu → kart */
+  .adm-table.adm-table--kasa thead { display: none; }
+  .adm-table.adm-table--kasa,
+  .adm-table.adm-table--kasa tbody,
+  .adm-table.adm-table--kasa tr { display: block; }
+  .adm-table.adm-table--kasa tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .adm-table.adm-table--kasa td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .adm-table.adm-table--kasa td:last-child { border-bottom: none; }
+  .adm-table.adm-table--kasa td::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+
+  /* Usta özet tablosu → kart */
+  .adm-table.adm-table--masters thead { display: none; }
+  .adm-table.adm-table--masters,
+  .adm-table.adm-table--masters tbody,
+  .adm-table.adm-table--masters tr { display: block; }
+  .adm-table.adm-table--masters tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .adm-table.adm-table--masters td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .adm-table.adm-table--masters td:last-child { border-bottom: none; }
+  .adm-table.adm-table--masters td::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+
+  /* Oran geçmişi tablosu → kart */
+  .adm-table.adm-table--rates thead { display: none; }
+  .adm-table.adm-table--rates,
+  .adm-table.adm-table--rates tbody,
+  .adm-table.adm-table--rates tr { display: block; }
+  .adm-table.adm-table--rates tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .adm-table.adm-table--rates td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .adm-table.adm-table--rates td:last-child { border-bottom: none; }
+  .adm-table.adm-table--rates td::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+
+  /* ==========================================================================
+     FİLTRELER — tek sütun
+     ========================================================================== */
+  .adm-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .adm-input { height: 44px; }
+  .adm-input input { font-size: 15px; width: 100%; }
+  .adm-input--icon.adm-input--grow,
+  .adm-input--grow { flex: 1 1 auto; }
+
+  /* Filtre butonları: yan yana */
+  .adm-filters > .adm-btn { width: 100%; min-height: 44px; }
+
+  /* Hızlı filtre çipleri: kaydırılabilir */
+  .adm-quickfilters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .adm-quickfilters::-webkit-scrollbar { display: none; }
+  .adm-chipbtn { white-space: nowrap; padding: 8px 14px; min-height: 36px; }
+
+  /* Toolbar: sarma */
+  .adm-toolbar { flex-wrap: wrap; gap: 8px; }
+  .adm-toolbar .adm-btn { flex: 1; min-height: 44px; text-align: center; justify-content: center; }
+
+  /* ==========================================================================
+     FORMLAR — büyük input'lar, tek sütun
+     ========================================================================== */
+  .adm-field { margin-bottom: 16px; }
+  .adm-field label { font-size: 13px; }
+  .adm-field input,
+  .adm-field select,
+  .adm-field textarea {
+    min-height: 48px;
+    font-size: 16px; /* iOS zoom engeli */
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  /* addrow: sütunlu form (ödeme kaydet vb.) */
+  .adm-addrow {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .adm-addrow input,
+  .adm-addrow select {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+  .adm-addrow .adm-btn { min-height: 48px; width: 100%; justify-content: center; }
+
+  /* Rate input */
+  .adm-rate-input { display: flex; align-items: center; gap: 10px; }
+  .adm-rate-input input { min-height: 48px; font-size: 18px; width: 100px; }
+
+  /* select */
+  .adm-select {
+    min-height: 48px;
+    font-size: 16px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  /* ==========================================================================
+     GRID DÜZELTMELER
+     ========================================================================== */
+  .adm-grid--2 { grid-template-columns: minmax(0, 1fr); }
+  .adm-finance { grid-template-columns: minmax(0, 1fr); }
+  .adm-finance__wide { grid-column: span 1; }
+  .adm-finance__tops { grid-template-columns: minmax(0, 1fr); }
+  .adm-report__cols { grid-template-columns: minmax(0, 1fr); }
+
+  /* Kasa 2-kolon grid → tek sütun */
+  .adm-grid.adm-grid--2 { grid-template-columns: minmax(0,1fr); }
+
+  /* ==========================================================================
+     DÖNEM BAR (Usta Hesapları)
+     ========================================================================== */
+  .adm-periodbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0 14px;
+  }
+  .adm-periodbar .adm-input { flex: 1 1 auto; }
+
+  /* ==========================================================================
+     TAMAMLANAN İŞLEMLER LİSTESİ (POS)
+     ========================================================================== */
+  .adm-done__row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* ==========================================================================
+     RAPOR MODAL
+     ========================================================================== */
+  .adm-modalbox { border-radius: 18px 18px 0 0 !important; }
+  .adm-modalbox--lg { max-height: 90dvh; overflow-y: auto; }
+  .adm-modal { align-items: flex-end; }
+
+  .adm-filters--bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .adm-filters--bar .adm-btn { min-height: 44px; }
+
+  /* ==========================================================================
+     ÖZET BÖLÜMÜ (POS sağ kolon)
+     ========================================================================== */
+  .adm-total { padding: 14px 0; }
+  .adm-total span { font-size: 14px; }
+  .adm-total strong { font-size: 22px; }
+
+  /* Ödeme yöntemi: büyük butonlar */
+  .adm-segment { gap: 8px; }
+  .adm-segment__btn { min-height: 48px; flex: 1; font-size: 14px; }
+
+  /* ==========================================================================
+     RANDEVU LİSTESİ
+     ========================================================================== */
+  .adm-apptrow { flex-wrap: wrap; gap: 10px; padding: 14px; }
+  .adm-apptrow__actions { width: 100%; }
+  .adm-apptrow__actions .adm-btn { width: 100%; min-height: 44px; }
+
+  /* ==========================================================================
+     SVC LİST (Ayarlar) — büyük satırlar
+     ========================================================================== */
+  .adm-svclist { max-height: none; }
+  .adm-svcrow { padding: 10px 12px; min-height: 52px; }
+  .adm-svcrow input[type="number"] { min-height: 44px; }
+
+  /* ==========================================================================
+     Grafik yüksekliği
+     ========================================================================== */
+  .adm-chart { height: 160px; gap: 4px; }
+  .adm-chart__val { font-size: 9px; }
+  .adm-chart__label { font-size: 9px; }
+
+  /* ==========================================================================
+     KART başlıkları — sığdırma
+     ========================================================================== */
+  .adm-card__head { padding: 14px 16px; }
+  .adm-card__head h2 { font-size: 15px; }
+  .adm-card__head--wrap { flex-wrap: wrap; gap: 10px; }
+  .adm-card__head--wrap .adm-toolbar { width: 100%; }
+
+  /* ==========================================================================
+     BREAK (hizmet/usta ciro kırılım)
+     ========================================================================== */
+  .adm-break__row { padding: 10px 0; }
+  .adm-break__label { font-size: 13px; }
+
+  /* ==========================================================================
+     SAAT kalsın ama küçülsün
+     ========================================================================== */
+  .adm-clock span { font-size: 13px; }
+
+  /* ==========================================================================
+     TAMAMLAMA BUTONU — tam genişlik, büyük
+     ========================================================================== */
+  #completeBtn { font-size: 16px; min-height: 56px; }
+  #dayEndBtn { min-height: 44px; }
+
+  /* ==========================================================================
+     KPI'lar
+     ========================================================================== */
+  .adm-kpi__icon { width: 36px; height: 36px; border-radius: 10px; }
+  .adm-kpi__icon svg { width: 17px; height: 17px; }
+
+  /* ==========================================================================
+     USTA HESAPLAR — usta seçici genişlet
+     ========================================================================== */
+  #masterSelect { width: 100%; }
+
+  /* ==========================================================================
+     RAPOR sütun düzeltmesi
+     ========================================================================== */
+  .adm-report__kpis { grid-template-columns: repeat(2, 1fr); }
+
+  /* ==========================================================================
+     Menü görünümü aktifken adm-mob-bar menü butonu vurgusu
+     ========================================================================== */
+  .adm-mob-sheet.is-open ~ * .adm-mob-bar__btn--menu,
+  .adm-mob-bar__btn--menu.is-active { color: var(--gold); }
+
+} /* end @media 768px */
+
+/* ==========================================================================
+   YALNIZCA ≤ 480px ek düzeltmeler
+   ========================================================================== */
+@media (max-width: 480px) {
+  .adm-kpis,
+  .adm-kpis--3,
+  .adm-report__kpis { grid-template-columns: repeat(2, 1fr); }
+
+  .adm-svcgrid { grid-template-columns: 1fr 1fr; }
+
+  .adm-mob-bar__btn { font-size: 9.5px; }
+
+  .adm-pagebar__title h1 { font-size: 17px; }
+
+  /* Presets: sarma */
+  .adm-presets { flex-wrap: wrap; gap: 7px; }
+  .adm-preset { min-height: 44px; flex: 1 1 calc(33% - 7px); }
+}

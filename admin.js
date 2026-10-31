@@ -107,7 +107,8 @@
     appointments: { title: 'Randevular', sub: 'Müşterilerin site üzerinden aldığı online randevular.' },
     history: { title: 'İş Geçmişi', sub: 'Kayıtlı tüm işlemleri filtreleyin, inceleyin ve raporlayın.' },
     finance: { title: 'Mali İşlemler', sub: 'Günlük ve aylık ciro takibi, kırılımlar ve dönemsel raporlar.' },
-    masters: { title: 'Usta Hesapları', sub: 'Dönemsel hak ediş, usta ödemeleri ve kalan bakiye.' },
+    masters: { title: 'Usta Hesapları', sub: 'Usta bazlı iş geçmişi ve özet bilgiler.' },
+    'dukkan-kayitlari': { title: 'Dükkan Kayıtları', sub: 'Dönemsel hak ediş, usta ödemeleri ve kalan bakiye.' },
     kasa: { title: 'Kasa', sub: 'Nakit ve kart cirosu, gün sonu kapanışı ve fark takibi.' },
     pay: { title: 'Pay Ayarları', sub: 'Usta ve hizmet bazlı pay oranlarını yönetin.' },
     settings: { title: 'Ayarlar', sub: 'Hizmet fiyatlarını ve usta listesini yönetin.' }
@@ -148,13 +149,19 @@
     if (name === 'appointments' && window.BerberAppointments) window.BerberAppointments.render();
     if (name === 'kasa' && window.BerberPay) window.BerberPay.renderCash();
     if (name === 'pos') { renderDoneList(); renderDayStatus(); }
+    if (name === 'masters' && window.BerberPay && typeof window.BerberPay.renderMastersPage === 'function') window.BerberPay.renderMastersPage();
+    if (name === 'dukkan-kayitlari' && window.BerberPay && typeof window.BerberPay.renderMasterAccounts === 'function') window.BerberPay.renderMasterAccounts();
     if (!skipHash) {
       try { history.replaceState(null, '', '#' + name); } catch {}
     }
   }
 
+  function viewFromHash() {
+    const raw = (location.hash || '').replace(/^#/, '');
+    return raw.split(/[?&]/)[0];
+  }
   window.addEventListener('hashchange', () => {
-    const v = location.hash.replace('#', '');
+    const v = viewFromHash();
     if (VIEW_META[v] && v !== currentView) switchView(v, true);
   });
 
@@ -189,11 +196,9 @@
         list.querySelectorAll('.adm-home-master').forEach((btn) => {
           btn.addEventListener('click', () => {
             const name = btn.dataset.master;
-            switchView('masters');
-            const sel = $('#masterSelect');
-            if (sel) {
-              sel.value = name;
-              sel.dispatchEvent(new Event('change', { bubbles: true }));
+            switchView('masters', true);
+            if (window.BerberPay && typeof window.BerberPay.renderMastersPage === 'function') {
+              window.BerberPay.renderMastersPage(name);
             }
           });
         });
@@ -447,7 +452,7 @@
         <span class="adm-done__badge">${escapeHtml((j.time || '--:--'))}</span>
         <div class="adm-done__body">
           <div class="adm-done__top">
-            <span class="adm-done__name">${escapeHtml(j.master || '—')}</span>
+            <button type="button" class="adm-masterlink adm-done__name" data-master="${escapeHtml(j.master || '')}">${escapeHtml(j.master || '—')}</button>
             <span class="adm-done__amt">${money(j.amount)}</span>
           </div>
           <div class="adm-done__meta">${escapeHtml(servicesOf(j).join(' · '))}</div>
@@ -834,7 +839,7 @@
       tr.innerHTML = `
         <td class="adm-table__date" data-label="Tarih">${fmtDate(j.date)}</td>
         <td class="adm-table__time" data-label="Saat">${j.time || '—'}</td>
-        <td data-label="Usta"><span class="adm-table__master"><i>${escapeHtml(initials(j.master))}</i>${escapeHtml(j.master || '—')}</span></td>
+        <td data-label="Usta"><button type="button" class="adm-masterlink" data-master="${escapeHtml(j.master || '')}"><span class="adm-table__master"><i>${escapeHtml(initials(j.master))}</i>${escapeHtml(j.master || '—')}</span></button></td>
         <td class="adm-table__svc" data-label="Hizmetler">${escapeHtml(servicesOf(j).join(' · '))}</td>
         <td class="ta-right td-amount" data-label="Ücret"><strong>${money(j.amount)}</strong></td>
         <td class="ta-center" data-label="İşlem"><button type="button" class="adm-del" title="Sil"><svg><use href="#i-trash"/></svg></button></td>`;
@@ -1746,6 +1751,15 @@
      Köprü — admin-pay modülünün kullandığı mevcut yardımcılar.
      Yeni modül mevcut fonksiyonları değiştirmez, yalnızca okur.
   ------------------------------------------------------------------ */
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('.adm-masterlink');
+    if (!btn) return;
+    const name = btn.dataset.master;
+    if (name && window.BerberPanel && typeof window.BerberPanel.goToMaster === 'function') {
+      window.BerberPanel.goToMaster(name);
+    }
+  });
+
   window.BerberPanel = {
     getJobs, saveJobs, getSvcs, getMasters,
     getClosedDays, saveClosedDays,
@@ -1824,11 +1838,19 @@
   tickClock();
   setInterval(tickClock, 15000);
 
-  const initialView = location.hash.replace('#', '');
+  const initialView = viewFromHash();
   if (VIEW_META[initialView]) switchView(initialView, true);
   else switchView('home', true);
 
-  window.BerberPanel = { switchView };
+  window.BerberPanel = {
+    switchView,
+    goToMaster: (name) => {
+      switchView('masters', true);
+      if (window.BerberPay && typeof window.BerberPay.renderMastersPage === 'function') {
+        window.BerberPay.renderMastersPage(name);
+      }
+    }
+  };
 
   /* --- Başka cihazda yapılan değişiklikler --- */
   S.onChange((keys) => {

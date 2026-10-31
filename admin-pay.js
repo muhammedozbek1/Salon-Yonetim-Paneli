@@ -415,7 +415,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td data-label="Usta">
-            <span class="adm-table__master"><i>${api.escapeHtml(api.initials(a.master))}</i>${api.escapeHtml(a.master)}</span>
+            <button type="button" class="adm-masterlink" data-master="${api.escapeHtml(a.master)}"><span class="adm-table__master"><i>${api.escapeHtml(api.initials(a.master))}</i>${api.escapeHtml(a.master)}</span></button>
           </td>
           <td class="adm-nowrap" data-label="İşlem">${a.count}</td>
           <td class="ta-right adm-nowrap" data-label="Ciro"><strong>${fmtKurus(a.ciro)}</strong></td>
@@ -508,6 +508,7 @@
           savePayments(getPayments().filter((x) => x.id !== p.id));
           toast('Ödeme kaydı silindi');
           renderMasterAccounts();
+    if (typeof renderMastersPage === 'function') renderMastersPage();
         });
         payList.appendChild(item);
       });
@@ -518,6 +519,169 @@
     const el = $(sel);
     if (el) el.textContent = text;
   }
+
+
+  /* ==================================================================
+     USTA HESAPLARI — yeni sayfa
+  ================================================================== */
+  let mastersPageSelected = null;
+
+  function mastersPageReadParams() {
+    const params = new URLSearchParams(location.search);
+    const rawHash = (location.hash || '').replace(/^#/, '');
+    let q = '';
+    const qi = rawHash.indexOf('?');
+    const ai = rawHash.indexOf('&');
+    if (qi >= 0) q = rawHash.slice(qi + 1);
+    else if (ai >= 0) q = rawHash.slice(ai + 1);
+    if (q) {
+      const hp = new URLSearchParams(q);
+      hp.forEach((v, k) => { if (!params.has(k)) params.set(k, v); });
+    }
+    return params;
+  }
+
+  function mastersPageWriteParam(name) {
+    const hashParams = new URLSearchParams();
+    if (name) hashParams.set('usta', name);
+    const newHash = 'masters' + (hashParams.toString() ? '?' + hashParams.toString() : '');
+    try { history.replaceState(null, '', location.pathname + location.search + '#' + newHash); } catch {}
+  }
+
+  function resolveMasterPageSelection(requested) {
+    const masters = api.getMasters();
+    if (!masters.length) return null;
+    if (requested && masters.indexOf(requested) !== -1) return requested;
+    if (!requested && mastersPageSelected && masters.indexOf(mastersPageSelected) !== -1) return mastersPageSelected;
+    const params = mastersPageReadParams();
+    const fromUrl = params.get('usta');
+    if (fromUrl && masters.indexOf(fromUrl) !== -1) return fromUrl;
+    return masters[0];
+  }
+
+  function masterJobCardHtml(j) {
+    const services = (Array.isArray(j.services) && j.services.length) ? j.services : [j.service].filter(Boolean);
+    const isCard = j.paymentMethod === 'card';
+    const pm = isCard ? 'Kart' : 'Nakit';
+    const pmClass = isCard ? 'adm-tag--gold' : 'adm-tag--ok';
+    return `
+      <article class="adm-jobcard">
+        <button type="button" class="adm-jobcard__toggle" aria-expanded="false">
+          <div class="adm-jobcard__main">
+            <div class="adm-jobcard__title">${api.escapeHtml(services.join(' + '))}</div>
+            <div class="adm-jobcard__meta">${api.escapeHtml(j.time || '—')} · ${api.escapeHtml(pm)}</div>
+          </div>
+          <div class="adm-jobcard__amounts">
+            <strong>${fmtKurus(j.amountKurus)}</strong>
+            <span>Usta payı ${fmtKurus(j.masterShareKurus)}</span>
+          </div>
+          <span class="adm-tag ${pmClass}">${pm}</span>
+        </button>
+        <div class="adm-jobcard__detail">
+          <div class="adm-jobcard__detailrow"><span>Ücret</span><strong>${fmtKurus(j.amountKurus)}</strong></div>
+          <div class="adm-jobcard__detailrow"><span>Oran</span><strong>%${j.commissionRate}</strong></div>
+          <div class="adm-jobcard__detailrow"><span>Usta Payı</span><strong>${fmtKurus(j.masterShareKurus)}</strong></div>
+          <div class="adm-jobcard__detailrow"><span>Dükkan Payı</span><strong>${fmtKurus(j.shopShareKurus)}</strong></div>
+          <div class="adm-jobcard__detailrow"><span>Tahsilat</span><strong>${pm}</strong></div>
+          <div class="adm-jobcard__detailrow"><span>Tarih</span><strong>${api.fmtDate(j.date)} ${api.escapeHtml(j.time || '')}</strong></div>
+        </div>
+      </article>`;
+  }
+
+  function renderMastersPage(requested) {
+    const masters = api.getMasters();
+    const strip = $('#masterChipStrip');
+    const empty = $('#mastersEmpty');
+    const summaryCard = $('#masterSummaryCard');
+    const historyCard = $('#masterHistoryCard');
+
+    if (!masters.length) {
+      if (strip) strip.innerHTML = '';
+      if (empty) empty.style.display = '';
+      if (summaryCard) summaryCard.style.display = 'none';
+      if (historyCard) historyCard.style.display = 'none';
+      mastersPageSelected = null;
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    const selected = resolveMasterPageSelection(requested);
+    mastersPageSelected = selected;
+    mastersPageWriteParam(selected);
+
+    if (strip) {
+      strip.innerHTML = masters.map((m) => `
+        <button type="button" class="adm-masterchip ${m === selected ? 'is-active' : ''}" data-master="${api.escapeHtml(m)}">
+          <span class="adm-masterchip__avatar">${api.escapeHtml(api.initials(m))}</span>
+          <span class="adm-masterchip__name">${api.escapeHtml(m)}</span>
+        </button>`).join('');
+      strip.querySelectorAll('.adm-masterchip').forEach((btn) => {
+        btn.addEventListener('click', () => renderMastersPage(btn.dataset.master));
+      });
+      const active = strip.querySelector('.adm-masterchip.is-active');
+      if (active) {
+        try { active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } catch {}
+      }
+    }
+
+    const jobs = allJobs().filter((j) => j.master === selected);
+    const payments = getPayments().filter((p) => p.master === selected);
+    const ciro = jobs.reduce((a, j) => a + j.amountKurus, 0);
+    const share = jobs.reduce((a, j) => a + j.masterShareKurus, 0);
+    const paid = payments.reduce((a, p) => a + p.amountKurus, 0);
+    const balance = share - paid;
+
+    if (summaryCard) {
+      summaryCard.style.display = '';
+      const nameEl = $('#masterSummaryName');
+      if (nameEl) nameEl.textContent = selected;
+      const subEl = $('#masterSummarySub');
+      if (subEl) subEl.textContent = `${jobs.length} iş · ${payments.length} ödeme`;
+      const stats = $('#masterSummaryStats');
+      if (stats) {
+        stats.innerHTML = `
+          <div class="adm-mstat"><span>İşlem</span><strong>${jobs.length}</strong></div>
+          <div class="adm-mstat"><span>Toplam Ciro</span><strong>${fmtKurus(ciro)}</strong></div>
+          <div class="adm-mstat adm-mstat--gold"><span>Hak Ediş</span><strong>${fmtKurus(share)}</strong></div>
+          <div class="adm-mstat adm-mstat--ok"><span>Ödenen</span><strong>${fmtKurus(paid)}</strong></div>
+          <div class="adm-mstat ${balance > 0 ? 'adm-mstat--danger' : 'adm-mstat--ok'}"><span>Kalan</span><strong>${fmtKurus(balance)}</strong></div>`;
+      }
+    }
+
+    if (historyCard) {
+      historyCard.style.display = '';
+      const subEl = $('#masterHistorySub');
+      const body = $('#masterHistoryBody');
+      const sorted = jobs.slice().sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+      if (subEl) subEl.textContent = sorted.length ? `${sorted.length} iş` : 'Kayıt yok';
+      if (!sorted.length) {
+        if (body) body.innerHTML = '<div class="adm-empty">Bu ustanın iş kaydı yok.</div>';
+        return;
+      }
+      const groups = new Map();
+      sorted.forEach((j) => {
+        if (!groups.has(j.date)) groups.set(j.date, []);
+        groups.get(j.date).push(j);
+      });
+      let html = '';
+      for (const [date, list] of groups) {
+        html += `<div class="adm-historyday">
+          <div class="adm-historyday__head">${api.fmtDate(date)} · ${list.length} iş</div>
+          <div class="adm-historyday__list">${list.map(masterJobCardHtml).join('')}</div>
+        </div>`;
+      }
+      if (body) {
+        body.innerHTML = html;
+        body.querySelectorAll('.adm-jobcard__toggle').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const card = btn.closest('.adm-jobcard');
+            if (card) card.classList.toggle('is-open');
+          });
+        });
+      }
+    }
+  }
+
 
   /* ==================================================================
      3) KASA
@@ -661,7 +825,7 @@
           const isCard = j.paymentMethod === 'card';
           tr.innerHTML = `
             <td class="adm-table__time" data-label="Saat">${j.time || '—'}</td>
-            <td class="adm-nowrap" data-label="Usta">${api.escapeHtml(j.master || '—')}</td>
+            <td class="adm-nowrap" data-label="Usta"><button type="button" class="adm-masterlink" data-master="${api.escapeHtml(j.master || '')}">${api.escapeHtml(j.master || '-')}</button></td>
             <td class="adm-table__svc" data-label="Hizmetler">${api.escapeHtml(j.services.join(' · '))}</td>
             <td data-label="Tahsilat"><span class="adm-tag ${isCard ? 'adm-tag--gold' : 'adm-tag--ok'}">${isCard ? 'Kart' : 'Nakit'}</span></td>
             <td class="ta-right adm-nowrap" data-label="Tutar"><strong>${fmtKurus(j.amountKurus)}</strong></td>`;
@@ -1029,7 +1193,7 @@
       btn.addEventListener('click', () => {
         const view = btn.dataset.view;
         if (view === 'pay') renderPaySettings();
-        if (view === 'masters') renderMasterAccounts();
+        if (view === 'masters' && window.BerberPay && typeof window.BerberPay.renderMastersPage === 'function') window.BerberPay.renderMastersPage();
         /* Kasa ekranı PIN arkasında — kilitliyken veriyi çizme */
         if (view === 'kasa' && window.BerberPin && !window.BerberPin.isUnlocked()) return;
         if (view === 'kasa') renderCash();
@@ -1038,6 +1202,23 @@
 
     /* --- İlk render (gizliyken de hesaplanabilsin) --- */
     renderPaySettings();
+    const mastersDukkanBtn = $('#mastersDukkanBtn');
+    if (mastersDukkanBtn) {
+      mastersDukkanBtn.addEventListener('click', () => {
+        if (window.BerberPanel && typeof window.BerberPanel.switchView === 'function') {
+          window.BerberPanel.switchView('dukkan-kayitlari');
+        }
+      });
+    }
+    const dukkanBackBtn = $('#dukkanBackBtn');
+    if (dukkanBackBtn) {
+      dukkanBackBtn.addEventListener('click', () => {
+        if (window.BerberPanel && typeof window.BerberPanel.switchView === 'function') {
+          window.BerberPanel.switchView('masters');
+        }
+      });
+    }
+
     renderMasterAccounts();
     /* Kasa verisi yalnızca PIN açıldıktan sonra çizilir */
     if (!window.BerberPin || window.BerberPin.isUnlocked()) renderCash();
@@ -1083,6 +1264,7 @@
     },
     renderCash,
     renderMasterAccounts,
+    renderMastersPage,
     renderPaySettings,
     migrate
   };

@@ -23,6 +23,7 @@
 
   let code = '';
   let pinLen = 4;
+  let prevOverflow = '';
   let onSuccess = null;
   let busy = false;
 
@@ -71,6 +72,21 @@
     if (btn) btn.disabled = true;
   }
 
+
+  function lockScroll() {
+    prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  function unlockScroll() {
+    document.body.style.overflow = prevOverflow;
+  }
+  function closePinModal() {
+    modal.classList.remove('is-open');
+    reset();
+    onSuccess = null;
+    unlockScroll();
+  }
+
   /* ------------------------------------------------------------------
      Tuş takımı
   ------------------------------------------------------------------ */
@@ -113,10 +129,8 @@
     try {
       await store.pin.verify(code);
       setUnlocked(true);
-      modal.classList.remove('is-open');
-      reset();
       const cb = onSuccess;
-      onSuccess = null;
+      closePinModal();
       if (cb) cb();
     } catch (err) {
       busy = false;
@@ -138,6 +152,7 @@
     const titleEl = $('#pinModalTitle');
     if (titleEl && title) titleEl.textContent = title;
     modal.classList.add('is-open');
+    lockScroll();
     setTimeout(() => {
       const first = pad.querySelector('[data-pin="1"]');
       if (first) first.focus();
@@ -174,10 +189,23 @@
   const submitBtn = $('#pinSubmit');
   if (submitBtn) submitBtn.addEventListener('click', submit);
 
+  const cancelBtn = $('#pinCancelBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', closePinModal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closePinModal();
+  });
+
+  function handleRouteChange() {
+    if (modal.classList.contains('is-open')) closePinModal();
+  }
+  window.addEventListener('hashchange', handleRouteChange);
+  window.addEventListener('popstate', handleRouteChange);
+
   /* Klavye ile giriş */
   document.addEventListener('keydown', (e) => {
     if (!modal.classList.contains('is-open')) return;
-    if (e.key === 'Escape') { modal.classList.remove('is-open'); reset(); return; }
+    if (e.key === 'Escape') { closePinModal(); return; }
     if (e.key === 'Enter') { e.preventDefault(); submit(); return; }
     if (e.key === 'Backspace') { e.preventDefault(); backspace(); return; }
     if (/^\d$/.test(e.key)) { e.preventDefault(); press(e.key); }

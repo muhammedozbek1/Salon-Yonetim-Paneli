@@ -617,6 +617,55 @@
 
       <!-- ---------- USTA HESAPLARI ---------- -->
       <section class="adm-view" data-view="masters">
+        <div class="adm-masters-topbar">
+          <div>
+            <h2 class="adm-masters-title">Usta Hesapları</h2>
+            <p class="adm-masters-sub">Bir usta seçin, iş geçmişi ve özet bilgileri görüntüleyin.</p>
+          </div>
+          <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm" id="mastersDukkanBtn">
+            Dükkan Kayıtları
+          </button>
+        </div>
+
+        <div class="adm-masterchipstrip" id="masterChipStrip" role="tablist" aria-label="Ustalar"></div>
+
+        <div id="mastersEmpty" class="adm-empty" style="display:none;">
+          <svg><use href="#i-users"/></svg>
+          <p>Henüz usta yok</p>
+          <span>Ayarlar bölümünden usta ekleyebilirsiniz.</span>
+        </div>
+
+        <section class="adm-card adm-master-summarycard" id="masterSummaryCard" style="display:none;">
+          <header class="adm-card__head">
+            <div>
+              <h2 id="masterSummaryName">—</h2>
+              <span class="adm-card__sub" id="masterSummarySub">—</span>
+            </div>
+          </header>
+          <div class="adm-card__body">
+            <div class="adm-masterstats" id="masterSummaryStats"></div>
+          </div>
+        </section>
+
+        <section class="adm-card" id="masterHistoryCard" style="display:none;">
+          <header class="adm-card__head">
+            <div>
+              <h2>İş Geçmişi</h2>
+              <span class="adm-card__sub" id="masterHistorySub">—</span>
+            </div>
+          </header>
+          <div class="adm-card__body" id="masterHistoryBody"></div>
+        </section>
+      </section>
+
+      <!-- ---------- DÜKKAN KAYITLARI ---------- -->
+      <section class="adm-view" data-view="dukkan-kayitlari">
+        <div class="adm-dukkan-topbar">
+          <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm" id="dukkanBackBtn">
+            <svg><use href="#i-arrow"/></svg> Geri
+          </button>
+          <h2 class="adm-dukkan-title">Dükkan Kayıtları</h2>
+        </div>
         <div class="adm-periodbar">
           <div class="adm-quickfilters">
             <button type="button" class="adm-chipbtn adm-period-btn is-active" data-period="day">Günlük</button>
@@ -656,7 +705,7 @@
             <div class="adm-kpi__body">
               <span class="adm-kpi__label">Hak Ediş</span>
               <strong class="adm-kpi__value" id="maShare">0 ₺</strong>
-              <span class="adm-kpi__meta">Snapshot payları</span>
+              <span class="adm-kpi__meta">Snapshot paylar</span>
             </div>
           </div>
           <div class="adm-kpi">
@@ -1213,7 +1262,7 @@
     </div>
 
     <button type="button" class="adm-btn adm-btn--primary adm-btn--full" id="pinSubmit" disabled>Kilidi Aç</button>
-    <button type="button" class="adm-btn adm-btn--ghost adm-btn--full" data-close="pinModal">Vazgeç</button>
+    <button type="button" class="adm-btn adm-btn--ghost adm-btn--full" id="pinCancelBtn">Vazgeç</button>
   </div>
 </div>
 
